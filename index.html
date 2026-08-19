@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>LIROC Ecosystem</title>
-    <!-- Telegram SDK & TON Connect SDK -->
+    <title>LIROC App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
@@ -34,338 +33,212 @@
 
         /* Хедер */
         .header {
-            padding: 12px 16px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(11, 13, 18, 0.8);
+            background: rgba(11, 13, 18, 0.9);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--card-border);
             z-index: 10;
         }
 
         .header-left { display: flex; align-items: center; gap: 8px; }
-        .logo-gem {
-            font-size: 20px;
-            filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
-            animation: pulse-gem 3s infinite alternate;
-        }
-        @keyframes pulse-gem {
-            0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.5)); }
-            100% { transform: scale(1.1); filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.8)); }
-        }
+        .logo-gem { font-size: 20px; }
+        .app-title { font-size: 16px; font-weight: 900; letter-spacing: 1px; background: linear-gradient(90deg, #a855f7, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .app-title { font-size: 18px; font-weight: 900; letter-spacing: 1.5px; background: linear-gradient(90deg, #a855f7, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
+        .header-right { display: flex; align-items: center; gap: 10px; }
         .balance-pill {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(6, 182, 212, 0.15));
-            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
             border-radius: 20px;
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            transition: all 0.2s ease;
-        }
-        .balance-pill:active { transform: scale(0.95); border-color: var(--accent-cyan); }
-
-        /* Контейнер Экранов */
-        .content-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            padding-bottom: 90px;
-        }
-
-        /* Баннер Розыгрыша (1000 Подписчиков) */
-        .promo-banner {
-            background: linear-gradient(135deg, #2e1065 0%, #0f172a 100%);
-            border-radius: 20px;
-            padding: 18px;
-            border: 1px solid var(--accent-purple);
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.25);
-        }
-        .promo-tag {
-            background: var(--accent-gold);
-            color: #000;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-        .promo-title { font-size: 17px; font-weight: 800; margin-bottom: 6px; line-height: 1.3; }
-        .promo-text { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; }
-        
-        /* Галерея NFT в Баннере */
-        .banner-nft-preview {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-        .nft-preview-item {
-            width: 45px; height: 45px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex; justify-content: center; align-items: center;
-            font-size: 22px;
-            animation: float 3s ease-in-out infinite alternate;
-        }
-        .nft-preview-item:nth-child(2) { animation-delay: 0.5s; }
-        .nft-preview-item:nth-child(3) { animation-delay: 1s; }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            100% { transform: translateY(-6px); }
-        }
-
-        .btn-subscribe {
-            background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 12px;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            width: 100%;
-            transition: opacity 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .btn-subscribe:active { opacity: 0.8; }
 
-        /* Карточки предметов */
-        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .item-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid var(--card-border);
+        .user-avatar-btn {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-purple);
             overflow: hidden;
-            display: flex; flex-direction: column;
+            cursor: pointer;
+            background: #2a1a3a;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 14px;
+        }
+        .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Контейнер */
+        .content-container { flex: 1; overflow-y: auto; padding: 14px; padding-bottom: 85px; }
+
+        /* Игровое меню */
+        .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .game-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
             transition: transform 0.2s, border-color 0.2s;
         }
-        .item-card:active { transform: scale(0.98); border-color: var(--accent-purple); }
+        .game-card:active { transform: scale(0.96); border-color: var(--accent-cyan); }
+        .game-icon { font-size: 36px; margin-bottom: 6px; }
+        .game-title { font-size: 14px; font-weight: 800; }
+        .game-subtitle { font-size: 10px; color: var(--text-secondary); }
 
-        .item-img-wrap {
-            height: 130px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 48px;
-            position: relative;
-        }
-        .bg-red { background: radial-gradient(circle, rgba(239, 68, 68, 0.2) 0%, transparent 70%); }
-        .bg-blue { background: radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, transparent 70%); }
-        .bg-purple { background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%); }
-
-        .item-info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
-        .item-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
-        .item-sub { font-size: 10px; color: var(--text-secondary); margin-bottom: 10px; }
-
-        .btn-card {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-main);
-            border: 1px solid var(--card-border);
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            width: 100%;
-        }
-
-        /* Стили Экранов */
-        .page-screen { display: none; animation: fadeIn 0.3s ease; }
-        .page-screen.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Интерактивные Элементы Разделов */
-        .forge-zone {
+        /* Шаблон игры */
+        .game-stage {
             background: var(--card-bg);
-            border: 2px dashed var(--accent-purple);
+            border: 1px solid var(--card-border);
             border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .arena-card {
-            background: linear-gradient(135deg, #1e1b4b, #0f172a);
-            border: 1px solid #3730a3;
-            border-radius: 16px;
             padding: 16px;
-            margin-bottom: 12px;
+            text-align: center;
+            margin-bottom: 14px;
         }
+
+        /* NFT сетка */
+        .nft-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .nft-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+            padding: 10px;
+            text-align: center;
+        }
+        .nft-card img { width: 100%; height: 110px; object-fit: contain; border-radius: 8px; margin-bottom: 8px; }
 
         /* Навигация */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 75px;
+            position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
             background: rgba(11, 13, 18, 0.95);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(10px);
             border-top: 1px solid var(--card-border);
             display: flex; justify-content: space-around; align-items: center;
-            padding: 0 8px; z-index: 100;
+            z-index: 100;
         }
-
-        .nav-btn {
-            display: flex; flex-direction: column; align-items: center;
-            color: var(--text-secondary); font-size: 10px; font-weight: 600;
-            text-decoration: none; gap: 4px; transition: color 0.2s;
-        }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); font-size: 10px; text-decoration: none; gap: 3px; }
         .nav-btn.active { color: var(--accent-cyan); }
-        .nav-icon { font-size: 20px; }
+        .nav-icon { font-size: 18px; }
 
-        .nav-forge-btn {
-            position: relative; top: -15px; color: var(--accent-purple) !important;
-        }
-        .forge-circle {
-            width: 52px; height: 52px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
-            display: flex; justify-content: center; align-items: center;
-            font-size: 24px; color: #fff;
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
-        }
+        .page-screen { display: none; }
+        .page-screen.active { display: block; }
 
-        /* Модалка */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1000;
-            align-items: center; justify-content: center;
-        }
-        .modal-card {
-            background: var(--card-bg); padding: 24px; border-radius: 20px;
-            width: 85%; max-width: 320px; border: 1px solid var(--card-border); text-align: center;
-        }
-        .pay-opt-btn {
-            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px;
-            font-weight: 700; cursor: pointer; border: 1px solid; font-size: 13px;
-        }
-        .pay-stars { background: rgba(168, 85, 247, 0.15); color: #fff; border-color: var(--accent-purple); }
-        .pay-ton { background: rgba(6, 182, 212, 0.15); color: #fff; border-color: var(--accent-cyan); }
+        /* Профиль */
+        .profile-card { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--card-border); margin-bottom: 12px; }
+        .profile-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .action-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- ХЕКДЕР -->
+    <!-- ХЕДЕР -->
     <div class="header">
         <div class="header-left">
             <div class="logo-gem">💎</div>
             <div class="app-title">LIROC</div>
         </div>
-        <div class="balance-pill" onclick="openTopupModal()">
-            <span>💎</span>
-            <span id="user-balance">--</span>
-            <span style="color: var(--accent-cyan);">+</span>
+        <div class="header-right">
+            <div class="balance-pill" onclick="openTopupModal()">
+                <span>💎</span>
+                <span id="user-balance">0</span>
+                <span style="font-size:10px; color:var(--text-secondary);">LIR POINT</span>
+            </div>
+            <div class="user-avatar-btn" id="user-avatar" onclick="openPage('profile')">
+                👤
+            </div>
         </div>
     </div>
 
-    <!-- КОНТЕНТ -->
     <div class="content-container">
 
         <!-- 1. ЭКРАН: МАСТЕРСКАЯ -->
         <div id="screen-workshop" class="page-screen active">
-            <!-- Баннер Розыгрыша -->
-            <div class="promo-banner">
-                <span class="promo-tag">🎁 Розыгрыш NFT</span>
-                <div class="promo-title">1000 Подписчиков = Большой Дроп!</div>
-                <div class="promo-text">При достижении 1000 подписчиков в нашем ТГ-канале мы разыграем редкие NFT-активы среди участников!</div>
-                
-                <div class="banner-nft-preview">
-                    <div class="nft-preview-item">👑</div>
-                    <div class="nft-preview-item">⚔️</div>
-                    <div class="nft-preview-item">🔮</div>
-                    <div class="nft-preview-item">🛡️</div>
-                </div>
-
-                <button class="btn-subscribe" onclick="openTelegramChannel()">Подписаться на Liroc Channel</button>
-            </div>
-
-            <div style="font-size: 14px; font-weight: 800; margin-bottom: 12px; color: var(--text-secondary);">
-                🔥 ПОПУЛЯРНЫЕ АКТИВЫ
-            </div>
-
-            <div class="items-grid">
-                <div class="item-card">
-                    <div class="item-img-wrap bg-purple">👑</div>
-                    <div class="item-info">
-                        <div class="item-title">Liroc Crown</div>
-                        <div class="item-sub">Легендарный артефакт</div>
-                        <button class="btn-card" onclick="openTopupModal()">💎 500 Liroc</button>
-                    </div>
-                </div>
-
-                <div class="item-card">
-                    <div class="item-img-wrap bg-blue">🔮</div>
-                    <div class="item-info">
-                        <div class="item-title">Sphere of Time</div>
-                        <div class="item-sub">Эпический предмет</div>
-                        <button class="btn-card" onclick="openTopupModal()">💎 250 Liroc</button>
-                    </div>
-                </div>
+            <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">🔥 Популярные NFT</div>
+            <div class="nft-grid" id="nft-container">
+                <!-- Динамически загружается из JS -->
             </div>
         </div>
 
-        <!-- 2. ЭКРАН: АРЕНА -->
-        <div id="screen-arena" class="page-screen">
-            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🏆 Арена Прогнозов</div>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Делай прогнозы на курс TON и Liroc Dust и выигрывай банк!</p>
+        <!-- 2. ЭКРАН: ИГРЫ (Вместо Арены) -->
+        <div id="screen-games" class="page-screen">
+            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🎮 Игровой Центр</div>
+            
+            <div class="games-grid">
+                <div class="game-card" onclick="openGame('wheel')">
+                    <div class="game-icon">🎡</div>
+                    <div class="game-title">Колесо Фортуны</div>
+                    <div class="game-subtitle">x2, x4, x5, x20</div>
+                </div>
+                <div class="game-card" onclick="openGame('plinko')">
+                    <div class="game-icon">🔻</div>
+                    <div class="game-title">Plinko</div>
+                    <div class="game-subtitle">Пирамида множителей</div>
+                </div>
+                <div class="game-card" onclick="openGame('rocket')">
+                    <div class="game-icon">🚀</div>
+                    <div class="game-title">Rocket</div>
+                    <div class="game-subtitle">Забери до краша</div>
+                </div>
+                <div class="game-card" onclick="openGame('battle')">
+                    <div class="game-icon">⚔️</div>
+                    <div class="game-title">Колесо Битва</div>
+                    <div class="game-subtitle">Игра с участниками</div>
+                </div>
+                <div class="game-card" style="grid-column: span 2;" onclick="openGame('clover')">
+                    <div class="game-icon">🍀</div>
+                    <div class="game-title">Кловер-Удача (Upgrade Roll)</div>
+                    <div class="game-subtitle">Настрой шанс выигрыша (1% - 95%)</div>
+                </div>
+            </div>
 
-            <div class="arena-card">
-                <div style="display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 8px;">
-                    <span>Курс TON / USDT</span>
-                    <span style="color: #22c55e;">+4.2%</span>
-                </div>
-                <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">Прием ставок закрывается через: 14m 20s</div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-card" style="background: rgba(34, 197, 94, 0.2); border-color: #22c55e;">📈 Вверх</button>
-                    <button class="btn-card" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444;">📉 Вниз</button>
-                </div>
+            <!-- Игровая зона -->
+            <div id="active-game-stage" class="game-stage" style="display:none;">
+                <button onclick="closeGame()" style="float:right; background:none; border:none; color:#aaa;">✖</button>
+                <div id="game-content"></div>
             </div>
         </div>
 
         <!-- 3. ЭКРАН: КУЗНИЦА -->
         <div id="screen-forge" class="page-screen">
             <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🔮 Кузница NFT</div>
-            
-            <div class="forge-zone">
-                <div style="font-size: 40px; margin-bottom: 10px;">⚒️</div>
-                <div style="font-weight: 700; margin-bottom: 4px;">Объединение Ресурсов</div>
-                <div style="font-size: 12px; color: var(--text-secondary);">Скрестите 3 простых предмета, чтобы получить 1 редкий NFT</div>
+            <div class="game-stage">
+                <div style="font-size: 40px;">⚒️</div>
+                <p style="font-size: 12px; color: var(--text-secondary);">Скрещивайте артефакты для получения редких LIR POINT NFT.</p>
             </div>
-
-            <button class="btn-subscribe" style="background: linear-gradient(90deg, #a855f7, #6366f1);">Начать Крафт (Скоро)</button>
         </div>
 
         <!-- 4. ЭКРАН: РЫНОК -->
         <div id="screen-market" class="page-screen">
-            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🔄 P2P Рынок</div>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Торгуйте предметами напрямую с другими игроками.</p>
-
-            <div class="items-grid">
-                <div class="item-card">
-                    <div class="item-img-wrap bg-red">⚔️</div>
-                    <div class="item-info">
-                        <div class="item-title">Cyber Blade</div>
-                        <div class="item-sub">Продавец: @alex_ton</div>
-                        <button class="btn-card">Купить за 1.2 TON</button>
-                    </div>
-                </div>
-            </div>
+            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🔄 P2P Маркет</div>
+            <p style="font-size: 12px; color: var(--text-secondary);">Покупка и продажа NFT за LIR POINT.</p>
         </div>
 
-        <!-- 5. ЭКРАН: ХРАНИЛИЩЕ -->
-        <div id="screen-vault" class="page-screen">
-            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">⚗️ Ваше Хранилище</div>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Здесь отображаются все ваши предметы и инвентарь.</p>
-            
-            <div style="background: var(--card-bg); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--card-border);">
-                <div style="font-size: 32px; margin-bottom: 8px;">📦</div>
-                <div style="font-size: 13px; color: var(--text-secondary);">У вас пока нет активных NFT предметов</div>
+        <!-- 5. ЭКРАН: ПРОФИЛЬ -->
+        <div id="screen-profile" class="page-screen">
+            <div class="profile-card">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="user-avatar-btn" id="profile-avatar-large" style="width:50px; height:50px; font-size:20px;">👤</div>
+                    <div>
+                        <div id="profile-name" style="font-weight:800; font-size:16px;">Пользователь</div>
+                        <div style="font-size:11px; color:var(--text-secondary);">Баланс: <b id="profile-balance" style="color:var(--accent-cyan);">0</b> LIR POINT</div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="action-btn" onclick="openTopupModal()">⬇ Ввод</button>
+                    <button class="action-btn">⬆ Вывод</button>
+                    <button class="action-btn">🎁 Бонус</button>
+                </div>
+            </div>
+            <div class="profile-card">
+                <div style="font-size:12px; font-weight:bold; margin-bottom:6px;">📜 История активности</div>
+                <div style="font-size:11px; color:var(--text-secondary); text-align:center; padding:10px;">Истории пока нет</div>
             </div>
         </div>
 
@@ -373,167 +246,86 @@
 
     <!-- НАВИГАЦИЯ -->
     <div class="bottom-nav">
-        <a href="#" class="nav-btn active" onclick="openPage('workshop', this)">
-            <span class="nav-icon">⚒</span><span>Мастерская</span>
-        </a>
-        <a href="#" class="nav-btn" onclick="openPage('arena', this)">
-            <span class="nav-icon">🏆</span><span>Арена</span>
-        </a>
-        <a href="#" class="nav-btn nav-forge-btn" onclick="openPage('forge', this)">
-            <div class="forge-circle">🔮</div><span>Кузница</span>
-        </a>
-        <a href="#" class="nav-btn" onclick="openPage('market', this)">
-            <span class="nav-icon">🔄</span><span>Рынок</span>
-        </a>
-        <a href="#" class="nav-btn" onclick="openPage('vault', this)">
-            <span class="nav-icon">⚗</span><span>Хранилище</span>
-        </a>
+        <a href="#" class="nav-btn active" onclick="openPage('workshop', this)"><span class="nav-icon">⚒</span><span>Мастерская</span></a>
+        <a href="#" class="nav-btn" onclick="openPage('games', this)"><span class="nav-icon">🎮</span><span>Игры</span></a>
+        <a href="#" class="nav-btn" onclick="openPage('forge', this)"><span class="nav-icon">🔮</span><span>Кузница</span></a>
+        <a href="#" class="nav-btn" onclick="openPage('market', this)"><span class="nav-icon">🔄</span><span>Рынок</span></a>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ОПЛАТЫ -->
-    <div id="topup-modal" class="modal-overlay">
-        <div class="modal-card">
-            <h3 style="margin-top:0; font-size:18px;">Пополнение баланса</h3>
-            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:18px;">Выберите удобный способ оплаты:</p>
-            
-            <button class="pay-opt-btn pay-stars" onclick="payWithStars(50)">
-                ⭐ Telegram Stars (50 Stars = 500 💎)
-            </button>
-
-            <button class="pay-opt-btn pay-ton" onclick="payWithTon(0.5)">
-                💎 TON Wallet (0.5 TON = 1000 💎)
-            </button>
-
-            <button onclick="closeTopupModal()" style="background:none; border:none; color:var(--text-secondary); margin-top:10px; cursor:pointer; font-size:12px;">Закрыть</button>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT ЛОГИКА -->
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
-        tg.setHeaderColor('#0b0d12');
-        tg.setBackgroundColor('#0b0d12');
 
-        const userParams = tg.initDataUnsafe;
+        const user = tg.initDataUnsafe?.user;
 
-        // ВАЖНО: При деплое замени на URL твоего FastAPI сервера
-        const BACKEND_URL = 'http://127.0.0.1:8000'; 
-
-        // Инициализация TON Connect
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: window.location.origin + '/tonconnect-manifest.json',
-        });
-
-        // Переход в ТГ Канал
-        function openTelegramChannel() {
-            // Замени 'liroc_channel' на ссылку/юзернейм своего канала
-            tg.openTelegramLink('https://t.me/liroc'); 
+        // Загрузка аватарки и профиля
+        if (user) {
+            document.getElementById('profile-name').innerText = user.first_name;
+            if (user.photo_url) {
+                const imgHtml = `<img src="${user.photo_url}" alt="avatar">`;
+                document.getElementById('user-avatar').innerHTML = imgHtml;
+                document.getElementById('profile-avatar-large').innerHTML = imgHtml;
+            }
         }
 
-        // Переключение Экранов
-        function openPage(pageName, navElement) {
+        // Переключение экранов
+        function openPage(pageName, btn) {
             document.querySelectorAll('.page-screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
             document.getElementById('screen-' + pageName).classList.add('active');
-            navElement.classList.add('active');
-
-            if (pageName === 'workshop') { tg.BackButton.hide(); } else { tg.BackButton.show(); }
+            if (btn) btn.classList.add('active');
         }
 
-        tg.BackButton.onClick(() => openPage('workshop', document.querySelector('.nav-btn')));
+        // Загрузка NFT с динамическими картинками
+        function loadNFTsFromAPI() {
+            const container = document.getElementById('nft-container');
+            // Массив картинок (можно вставлять любые ссылки или получаемые из API)
+            const nfts = [
+                { id: '#225606', title: 'Happy Brownie', img: 'https://cdn-icons-png.flaticon.com/512/8146/8146767.png', price: '0.07' },
+                { id: '#102352', title: 'Crimson Gem', img: 'https://cdn-icons-png.flaticon.com/512/616/616490.png', price: '15.0' },
+                { id: '#304112', title: 'Timepiece Watch', img: 'https://cdn-icons-png.flaticon.com/512/2972/2972531.png', price: '2.5' }
+            ];
 
-        // Управление Модальным окном
-        function openTopupModal() { document.getElementById('topup-modal').style.display = 'flex'; }
-        function closeTopupModal() { document.getElementById('topup-modal').style.display = 'none'; }
-
-        // Загрузка Данных Пользователя
-        async function loadUserData() {
-            if (!userParams.user) {
-                document.getElementById('user-balance').innerText = '100';
-                return;
-            }
-
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/user/init`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        telegram_id: userParams.user.id,
-                        first_name: userParams.user.first_name,
-                        username: userParams.user.username || '',
-                        init_data: tg.initData
-                    })
-                });
-                const data = await response.json();
-                document.getElementById('user-balance').innerText = Math.round(data.balance);
-            } catch (error) {
-                console.error('Ошибка бэкенда:', error);
-            }
+            container.innerHTML = nfts.map(nft => `
+                <div class="nft-card">
+                    <img src="${nft.img}" alt="${nft.title}">
+                    <div style="font-weight:bold; font-size:12px;">${nft.title}</div>
+                    <div style="font-size:10px; color:#aaa;">${nft.id}</div>
+                    <div style="font-size:11px; font-weight:bold; color:var(--accent-cyan); margin-top:4px;">💎 ${nft.price} LIR POINT</div>
+                </div>
+            `).join('');
         }
 
-        // Оплата Telegram Stars
-        async function payWithStars(starsCount) {
-            closeTopupModal();
-            const userId = userParams.user?.id || 12345;
-            try {
-                const res = await fetch(`${BACKEND_URL}/api/pay/create-stars-invoice?user_id=${userId}&amount_stars=${starsCount}`, {
-                    method: 'POST'
-                });
-                const data = await res.json();
+        // Логика запуска игр
+        function openGame(gameType) {
+            const stage = document.getElementById('active-game-stage');
+            const content = document.getElementById('game-content');
+            stage.style.display = 'block';
 
-                if (data.invoice_url) {
-                    tg.openInvoice(data.invoice_url, (status) => {
-                        if (status === 'paid') {
-                            tg.showAlert('Оплата прошла успешно! Баланс пополнен.');
-                            loadUserData();
-                        }
-                    });
-                }
-            } catch (e) {
-                tg.showAlert('Ошибка выписки чека Stars.');
+            if (gameType === 'wheel') {
+                content.innerHTML = `<h3>🎡 Колесо Фортуны</h3><p>Банк: 0 LIR POINT</p><button class="action-btn" style="background:var(--accent-purple);">Крутить (0.5 LIR)</button>`;
+            } else if (gameType === 'plinko') {
+                content.innerHTML = `<h3>🔻 Plinko</h3><p>Онлайн: 5920</p><button class="action-btn" style="background:var(--accent-gold); color:#000;">Бросить шар</button>`;
+            } else if (gameType === 'rocket') {
+                content.innerHTML = `<h3>🚀 Rocket</h3><p>Множитель: 1.00x</p><button class="action-btn">Ставка</button>`;
+            } else if (gameType === 'clover') {
+                content.innerHTML = `
+                    <h3>🍀 Кловер-Удача (#225606)</h3>
+                    <div style="font-size:30px; margin:10px;">☘️</div>
+                    <p style="font-size:12px;">Вероятность выиграть: <b>1%</b></p>
+                    <input type="range" min="1" max="95" value="1" style="width:80%;">
+                    <br><br>
+                    <button class="action-btn" style="background:var(--accent-gold); color:#000;">Испытать удачу (0.07 LIR POINT)</button>
+                `;
+            } else {
+                content.innerHTML = `<h3>⚔️ Битва Участников</h3><p>Ожидание игроков...</p>`;
             }
         }
 
-        // Оплата TON
-        async function payWithTon(tonAmount) {
-            closeTopupModal();
-            if (!tonConnectUI.connected) {
-                await tonConnectUI.openModal();
-                return;
-            }
+        function closeGame() { document.getElementById('active-game-stage').style.display = 'none'; }
 
-            // УКАЖИ СВОЙ РЕАЛЬНЫЙ КОШЕЛЕК
-            const PROJECT_WALLET = "UQB4IFTwO6RysL94ag5rKPHxwp68XV6gP093As_zL_7789HZ"; 
-
-            const transaction = {
-                validUntil: Math.floor(Date.now() / 1000) + 600,
-                messages: [{
-                    address: PROJECT_WALLET,
-                    amount: (tonAmount * 1e9).toString(),
-                }]
-            };
-
-            try {
-                const result = await tonConnectUI.sendTransaction(transaction);
-                const userId = userParams.user?.id || 12345;
-                
-                await fetch(`${BACKEND_URL}/api/pay/confirm-ton`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, tx_boc: result.boc })
-                });
-
-                tg.showAlert('Транзакция отправлена! Баланс пополнен.');
-                loadUserData();
-            } catch (e) {
-                tg.showAlert('Транзакция отменена.');
-            }
-        }
-
-        loadUserData();
+        loadNFTsFromAPI();
     </script>
 </body>
 </html>
