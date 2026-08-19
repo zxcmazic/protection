@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>LIROC App</title>
+    <!-- Telegram & TON SDKs -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <!-- Adsgram SDK (Реклама Telegram Mini Apps) -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    
     <style>
         :root {
             --bg-color: #0b0d12;
@@ -14,6 +18,8 @@
             --accent-purple: #a855f7;
             --accent-cyan: #06b6d4;
             --accent-gold: #eab308;
+            --accent-red: #ef4444;
+            --accent-green: #22c55e;
             --text-main: #f8fafc;
             --text-secondary: #94a3b8;
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -31,7 +37,7 @@
             user-select: none;
         }
 
-        /* Хедер */
+        /* Шапка */
         .header {
             padding: 10px 14px;
             display: flex;
@@ -58,11 +64,13 @@
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            transition: transform 0.1s;
         }
+        .balance-pill:active { transform: scale(0.95); }
 
         .user-avatar-btn {
-            width: 34px; height: 34px;
+            width: 36px; height: 36px;
             border-radius: 50%;
             border: 2px solid var(--accent-purple);
             overflow: hidden;
@@ -73,259 +81,533 @@
         }
         .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Контейнер */
+        /* Контейнер Экранов */
         .content-container { flex: 1; overflow-y: auto; padding: 14px; padding-bottom: 85px; }
 
-        /* Игровое меню */
-        .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-        .game-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 14px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        .game-card:active { transform: scale(0.96); border-color: var(--accent-cyan); }
-        .game-icon { font-size: 36px; margin-bottom: 6px; }
-        .game-title { font-size: 14px; font-weight: 800; }
-        .game-subtitle { font-size: 10px; color: var(--text-secondary); }
-
-        /* Шаблон игры */
-        .game-stage {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+        /* Баннер Розыгрыша */
+        .promo-banner {
+            background: linear-gradient(135deg, #2e1065 0%, #0f172a 100%);
             border-radius: 20px;
             padding: 16px;
-            text-align: center;
-            margin-bottom: 14px;
+            border: 1px solid var(--accent-purple);
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.25);
+        }
+        .promo-tag { background: var(--accent-gold); color: #000; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; display: inline-block; margin-bottom: 6px; }
+        .promo-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+        .promo-text { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4; }
+
+        .banner-nft-preview { display: flex; gap: 8px; margin-bottom: 12px; }
+        .nft-preview-item {
+            width: 40px; height: 40px; border-radius: 10px; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: center; align-items: center; font-size: 20px;
         }
 
-        /* NFT сетка */
+        .btn-action {
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+            color: #fff; border: none; padding: 10px 16px; border-radius: 12px; font-size: 12px; font-weight: 700; cursor: pointer; width: 100%; text-align: center;
+        }
+        .btn-action:active { opacity: 0.8; }
+
+        /* Сетка NFT */
         .nft-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .nft-card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            border: 1px solid var(--card-border);
-            overflow: hidden;
-            padding: 10px;
-            text-align: center;
+            background: var(--card-bg); border-radius: 16px; border: 1px solid var(--card-border);
+            overflow: hidden; padding: 12px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;
         }
         .nft-card img { width: 100%; height: 110px; object-fit: contain; border-radius: 8px; margin-bottom: 8px; }
+
+        /* Сетка Игр */
+        .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .game-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+            padding: 16px 12px; text-align: center; cursor: pointer; transition: transform 0.2s, border-color 0.2s;
+        }
+        .game-card:active { transform: scale(0.96); border-color: var(--accent-cyan); }
+        .game-icon { font-size: 38px; margin-bottom: 6px; }
+        .game-title { font-size: 14px; font-weight: 800; }
+        .game-subtitle { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Полноэкранный Игровой Режим */
+        .fullscreen-game {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color);
+            z-index: 500; display: none; flex-direction: column; padding: 16px; box-sizing: border-box; overflow-y: auto;
+        }
+        .fullscreen-game.active { display: flex; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+        /* Полноэкранный Профиль */
+        .profile-card { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--card-border); margin-bottom: 14px; }
+        .profile-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+        .action-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .action-btn:active { background: rgba(255,255,255,0.15); }
 
         /* Навигация */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
-            background: rgba(11, 13, 18, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--card-border);
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 100;
+            background: rgba(11, 13, 18, 0.95); backdrop-filter: blur(10px);
+            border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100;
         }
-        .nav-btn { display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); font-size: 10px; text-decoration: none; gap: 3px; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); font-size: 10px; text-decoration: none; gap: 4px; }
         .nav-btn.active { color: var(--accent-cyan); }
-        .nav-icon { font-size: 18px; }
+        .nav-icon { font-size: 20px; }
+
+        /* Модальные Окна */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-card { background: var(--card-bg); padding: 20px; border-radius: 20px; width: 85%; max-width: 320px; border: 1px solid var(--card-border); text-align: center; }
+        .pay-opt-btn { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px; font-weight: 700; cursor: pointer; border: 1px solid; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .pay-stars { background: rgba(234, 179, 8, 0.15); color: #fff; border-color: var(--accent-gold); }
+        .pay-ton { background: rgba(6, 182, 212, 0.15); color: #fff; border-color: var(--accent-cyan); }
 
         .page-screen { display: none; }
         .page-screen.active { display: block; }
-
-        /* Профиль */
-        .profile-card { background: var(--card-bg); border-radius: 16px; padding: 16px; border: 1px solid var(--card-border); margin-bottom: 12px; }
-        .profile-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-        .action-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- ХЕДЕР -->
+    <!-- ШАПКА -->
     <div class="header">
         <div class="header-left">
             <div class="logo-gem">💎</div>
             <div class="app-title">LIROC</div>
         </div>
         <div class="header-right">
+            <!-- Клик по балансу открывает модалку пополнения -->
             <div class="balance-pill" onclick="openTopupModal()">
                 <span>💎</span>
                 <span id="user-balance">0</span>
                 <span style="font-size:10px; color:var(--text-secondary);">LIR POINT</span>
             </div>
+            <!-- Клик по аватарке переводит в полноэкранный Профиль -->
             <div class="user-avatar-btn" id="user-avatar" onclick="openPage('profile')">
                 👤
             </div>
         </div>
     </div>
 
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР ЭКРАНОВ -->
     <div class="content-container">
 
-        <!-- 1. ЭКРАН: МАСТЕРСКАЯ -->
+        <!-- 1. ЭКРАН: МАСТЕРСКАЯ (ГЛАВНАЯ) -->
         <div id="screen-workshop" class="page-screen active">
-            <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">🔥 Популярные NFT</div>
+            
+            <!-- Рекламный Баннер / Акция -->
+            <div class="promo-banner">
+                <span class="promo-tag">🎁 Розыгрыш</span>
+                <div class="promo-title">Telegram Gifts & LIR POINT</div>
+                <div class="promo-text">Зарабатывайте и обменивайте эксклюзивные гифты и NFT прямо в Telegram Mini App.</div>
+                
+                <div class="banner-nft-preview">
+                    <div class="nft-preview-item">🧸</div>
+                    <div class="nft-preview-item">💎</div>
+                    <div class="nft-preview-item">🚀</div>
+                    <div class="nft-preview-item">🍀</div>
+                </div>
+
+                <!-- Кнопка вызова рекламы Adsgram -->
+                <button class="btn-action" onclick="showAdsgramAd()">
+                    📺 Смотреть рекламу (+10 LIR POINT)
+                </button>
+            </div>
+
+            <div style="font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🔥 Популярные Telegram NFT</span>
+                <span style="font-size: 11px; color: var(--accent-cyan); cursor: pointer;" onclick="loadNFTsFromAPI()">Обновить 🔄</span>
+            </div>
+
+            <!-- Сетка эксклюзивных NFT (динамическая загрузка из JS) -->
             <div class="nft-grid" id="nft-container">
-                <!-- Динамически загружается из JS -->
+                <!-- Карточки будут сгенерированы из JS -->
             </div>
         </div>
 
-        <!-- 2. ЭКРАН: ИГРЫ (Вместо Арены) -->
+        <!-- 2. ЭКРАН: ИГРЫ -->
         <div id="screen-games" class="page-screen">
             <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🎮 Игровой Центр</div>
             
             <div class="games-grid">
-                <div class="game-card" onclick="openGame('wheel')">
+                <div class="game-card" onclick="startFullscreenGame('wheel')">
                     <div class="game-icon">🎡</div>
                     <div class="game-title">Колесо Фортуны</div>
-                    <div class="game-subtitle">x2, x4, x5, x20</div>
+                    <div class="game-subtitle">Множители x2, x4, x10, x20</div>
                 </div>
-                <div class="game-card" onclick="openGame('plinko')">
+                
+                <div class="game-card" onclick="startFullscreenGame('plinko')">
                     <div class="game-icon">🔻</div>
                     <div class="game-title">Plinko</div>
-                    <div class="game-subtitle">Пирамида множителей</div>
+                    <div class="game-subtitle">Пирамида с шариками</div>
                 </div>
-                <div class="game-card" onclick="openGame('rocket')">
+
+                <div class="game-card" onclick="startFullscreenGame('rocket')">
                     <div class="game-icon">🚀</div>
-                    <div class="game-title">Rocket</div>
-                    <div class="game-subtitle">Забери до краша</div>
+                    <div class="game-title">Rocket Crash</div>
+                    <div class="game-subtitle">Забери до взрыва</div>
                 </div>
-                <div class="game-card" onclick="openGame('battle')">
+
+                <div class="game-card" onclick="startFullscreenGame('battle')">
                     <div class="game-icon">⚔️</div>
                     <div class="game-title">Колесо Битва</div>
-                    <div class="game-subtitle">Игра с участниками</div>
+                    <div class="game-subtitle">PvP против игроков</div>
                 </div>
-                <div class="game-card" style="grid-column: span 2;" onclick="openGame('clover')">
+
+                <div class="game-card" style="grid-column: span 2;" onclick="startFullscreenGame('clover')">
                     <div class="game-icon">🍀</div>
                     <div class="game-title">Кловер-Удача (Upgrade Roll)</div>
-                    <div class="game-subtitle">Настрой шанс выигрыша (1% - 95%)</div>
+                    <div class="game-subtitle">Полная настройка шанса выигрыша (1% - 95%)</div>
                 </div>
-            </div>
-
-            <!-- Игровая зона -->
-            <div id="active-game-stage" class="game-stage" style="display:none;">
-                <button onclick="closeGame()" style="float:right; background:none; border:none; color:#aaa;">✖</button>
-                <div id="game-content"></div>
             </div>
         </div>
 
         <!-- 3. ЭКРАН: КУЗНИЦА -->
         <div id="screen-forge" class="page-screen">
             <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🔮 Кузница NFT</div>
-            <div class="game-stage">
-                <div style="font-size: 40px;">⚒️</div>
-                <p style="font-size: 12px; color: var(--text-secondary);">Скрещивайте артефакты для получения редких LIR POINT NFT.</p>
+            <div style="background: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--card-border); text-align: center;">
+                <div style="font-size: 50px; margin-bottom: 10px;">⚒️</div>
+                <div style="font-weight: 800; margin-bottom: 6px;">Скрещивание предметов</div>
+                <p style="font-size: 12px; color: var(--text-secondary);">Объединяйте несколько слабых гифтов для создания редких Telegram NFT артефактов.</p>
+                <button class="btn-action" style="margin-top: 10px;">Выбрать предметы</button>
             </div>
         </div>
 
         <!-- 4. ЭКРАН: РЫНОК -->
         <div id="screen-market" class="page-screen">
-            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🔄 P2P Маркет</div>
-            <p style="font-size: 12px; color: var(--text-secondary);">Покупка и продажа NFT за LIR POINT.</p>
+            <div style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">🔄 P2P Маркетплейс</div>
+            <div style="background: var(--card-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--card-border); text-align: center;">
+                <div style="font-size: 50px; margin-bottom: 10px;">🏪</div>
+                <div style="font-weight: 800; margin-bottom: 6px;">Открытая торговля</div>
+                <p style="font-size: 12px; color: var(--text-secondary);">Покупайте и продавайте NFT с другими пользователями за LIR POINT и TON.</p>
+            </div>
         </div>
 
-        <!-- 5. ЭКРАН: ПРОФИЛЬ -->
+        <!-- 5. ЭКРАН: ПОЛНОЭКРАННЫЙ ПРОФИЛЬ -->
         <div id="screen-profile" class="page-screen">
             <div class="profile-card">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="user-avatar-btn" id="profile-avatar-large" style="width:50px; height:50px; font-size:20px;">👤</div>
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div class="user-avatar-btn" id="profile-avatar-large" style="width:56px; height:56px; font-size:24px;">👤</div>
                     <div>
-                        <div id="profile-name" style="font-weight:800; font-size:16px;">Пользователь</div>
-                        <div style="font-size:11px; color:var(--text-secondary);">Баланс: <b id="profile-balance" style="color:var(--accent-cyan);">0</b> LIR POINT</div>
+                        <div id="profile-name" style="font-weight:900; font-size:18px;">Пользователь</div>
+                        <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                            Баланс: <b id="profile-balance" style="color:var(--accent-cyan);">0</b> LIR POINT
+                        </div>
                     </div>
                 </div>
+
                 <div class="profile-actions">
                     <button class="action-btn" onclick="openTopupModal()">⬇ Ввод</button>
-                    <button class="action-btn">⬆ Вывод</button>
-                    <button class="action-btn">🎁 Бонус</button>
+                    <button class="action-btn" onclick="openWithdrawModal()">⬆ Вывод</button>
+                    <button class="action-btn" onclick="claimDailyBonus()" id="btn-bonus">🎁 Бонус</button>
                 </div>
             </div>
-            <div class="profile-card">
-                <div style="font-size:12px; font-weight:bold; margin-bottom:6px;">📜 История активности</div>
-                <div style="font-size:11px; color:var(--text-secondary); text-align:center; padding:10px;">Истории пока нет</div>
+
+            <!-- СЕКЦИЯ: МОИ NFT (ХРАНИЛИЩЕ ПОЛЬЗОВАТЕЛЯ) -->
+            <div style="font-size: 16px; font-weight: 800; margin-bottom: 10px;">🎒 Мои NFT и Подарки</div>
+            <div class="nft-grid" id="my-nfts-container">
+                <!-- Сюда подгружаются NFT пользователя -->
             </div>
         </div>
 
     </div>
 
-    <!-- НАВИГАЦИЯ -->
+    <!-- ПОЛНОЭКРАННЫЙ ИГРОВОЙ ИНТЕРФЕЙС -->
+    <div id="fullscreen-game-container" class="fullscreen-game">
+        <div class="game-header">
+            <div style="font-weight: 900; font-size: 18px;" id="game-modal-title">Игра</div>
+            <button onclick="closeFullscreenGame()" style="background: rgba(255,255,255,0.1); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer;">✖</button>
+        </div>
+        <div id="game-modal-body" style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+            <!-- Динамический игровой движок из 3-й части -->
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ПОПОЛНЕНИЯ (STARS + TON) -->
+    <div id="topup-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="font-size: 20px; font-weight: 900; margin-bottom: 6px;">Пополнение LIR POINT</div>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Выберите способ оплаты:</p>
+            
+            <button class="pay-opt-btn pay-stars" onclick="payWithStars()">
+                ⭐ Пополнить через Telegram Stars
+            </button>
+            <button class="pay-opt-btn pay-ton" onclick="payWithTON()">
+                💎 Пополнить через TON (TonConnect)
+            </button>
+
+            <button onclick="closeTopupModal()" style="background:none; border:none; color:var(--text-secondary); margin-top:10px; font-size:12px; cursor:pointer;">Отмена</button>
+        </div>
+    </div>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
     <div class="bottom-nav">
         <a href="#" class="nav-btn active" onclick="openPage('workshop', this)"><span class="nav-icon">⚒</span><span>Мастерская</span></a>
         <a href="#" class="nav-btn" onclick="openPage('games', this)"><span class="nav-icon">🎮</span><span>Игры</span></a>
         <a href="#" class="nav-btn" onclick="openPage('forge', this)"><span class="nav-icon">🔮</span><span>Кузница</span></a>
         <a href="#" class="nav-btn" onclick="openPage('market', this)"><span class="nav-icon">🔄</span><span>Рынок</span></a>
     </div>
-
     <script>
+        // 1. ИНИЦИАЛИЗАЦИЯ TELEGRAM И TON CONNECT
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
 
         const user = tg.initDataUnsafe?.user;
+        let userBalance = 100.00; // Стартовый баланс LIR POINT
 
-        // Загрузка аватарки и профиля
-        if (user) {
-            document.getElementById('profile-name').innerText = user.first_name;
-            if (user.photo_url) {
-                const imgHtml = `<img src="${user.photo_url}" alt="avatar">`;
-                document.getElementById('user-avatar').innerHTML = imgHtml;
-                document.getElementById('profile-avatar-large').innerHTML = imgHtml;
+        // TON Connect UI
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/ton-community/ton-connect-manifest/main/tonconnect-manifest.json'
+        });
+
+        // Adsgram реклама
+        let AdController = null;
+        if (window.Adsgram) {
+            // Замените 'YOUR_BLOCK_ID' на ваш ID блока Adsgram
+            AdController = window.Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
+        }
+
+        // Автоматический показ рекламы при старте (Adsgram)
+        window.addEventListener('DOMContentLoaded', () => {
+            updateBalanceUI();
+            initUserProfile();
+            loadNFTsFromAPI();
+            loadMyNFTs();
+
+            // Вызов рекламы Adsgram при входе
+            showAdsgramAd(true);
+        });
+
+        // 2. ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ И БАЛАНС
+        function initUserProfile() {
+            if (user) {
+                document.getElementById('profile-name').innerText = `${user.first_name} ${user.last_name || ''}`;
+                if (user.photo_url) {
+                    const avatarHtml = `<img src="${user.photo_url}" alt="Avatar">`;
+                    document.getElementById('user-avatar').innerHTML = avatarHtml;
+                    document.getElementById('profile-avatar-large').innerHTML = avatarHtml;
+                }
             }
         }
 
-        // Переключение экранов
-        function openPage(pageName, btn) {
-            document.querySelectorAll('.page-screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('screen-' + pageName).classList.add('active');
-            if (btn) btn.classList.add('active');
+        function updateBalanceUI() {
+            document.getElementById('user-balance').innerText = userBalance.toFixed(2);
+            document.getElementById('profile-balance').innerText = userBalance.toFixed(2);
         }
 
-        // Загрузка NFT с динамическими картинками
+        // 3. ADSGRAM РЕКЛАМА
+        function showAdsgramAd(isInitial = false) {
+            if (AdController) {
+                AdController.show().then((result) => {
+                    userBalance += 10;
+                    updateBalanceUI();
+                    tg.showAlert("📺 Спасибо за просмотр! Вам начислено +10 LIR POINT");
+                }).catch((result) => {
+                    if (!isInitial) tg.showAlert("Реклама временно недоступна или была пропущена.");
+                });
+            } else {
+                if (!isInitial) {
+                    // Симуляция в случае тестового режима без Adsgram ID
+                    userBalance += 10;
+                    updateBalanceUI();
+                    tg.showAlert("📺 [DEMO] Начислено +10 LIR POINT за просмотр рекламы.");
+                }
+            }
+        }
+
+        // 4. ПОПОЛНЕНИЕ (STARS И TON)
+        function openTopupModal() { document.getElementById('topup-modal').style.display = 'flex'; }
+        function closeTopupModal() { document.getElementById('topup-modal').style.display = 'none'; }
+
+        // Пополнение через Telegram Stars
+        function payWithStars() {
+            closeTopupModal();
+            // Вызов счета в боте для Stars через WebApp API
+            tg.openInvoice({
+                title: '100 LIR POINT',
+                description: 'Пополнение баланса в приложения LIROC',
+                payload: 'topup_stars_100',
+                currency: 'XTR',
+                prices: [{ label: '100 Stars', amount: 100 }]
+            }, (status) => {
+                if (status === 'paid') {
+                    userBalance += 100;
+                    updateBalanceUI();
+                    tg.showAlert("⭐ Баланс успешно пополнен на 100 LIR POINT!");
+                }
+            });
+        }
+
+        // Пополнение через TON
+        async function payWithTON() {
+            closeTopupModal();
+            if (!tonConnectUI.connected) {
+                await tonConnectUI.openModal();
+            } else {
+                const transaction = {
+                    validUntil: Math.floor(Date.now() / 1000) + 60,
+                    messages: [{
+                        address: "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c", // Адрес кошелька
+                        amount: "1000000000" // 1 TON в нанотонах
+                    }]
+                };
+                try {
+                    await tonConnectUI.sendTransaction(transaction);
+                    userBalance += 250;
+                    updateBalanceUI();
+                    tg.showAlert("💎 Оплата прошла успешно! +250 LIR POINT");
+                } catch (e) {
+                    tg.showAlert("Ошибка или отмена транзакции.");
+                }
+            }
+        }
+
+        // Ежедневный бонус и вывод
+        function claimDailyBonus() {
+            userBalance += 15;
+            updateBalanceUI();
+            document.getElementById('btn-bonus').disabled = true;
+            document.getElementById('btn-bonus').innerText = '✅ Получено';
+            tg.showAlert("🎁 Вы получили ежедневный бонус +15 LIR POINT!");
+        }
+
+        function openWithdrawModal() {
+            tg.showAlert("⬆ Заявка на вывод отправлена на проверку администратору.");
+        }
+
+        // 5. НАВИГАЦИЯ МЕЖДУ ЭКРАНАМИ
+        function openPage(pageName, btnElement) {
+            document.querySelectorAll('.page-screen').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('screen-' + pageName).classList.add('active');
+            if (btnElement) {
+                btnElement.classList.add('active');
+            }
+        }
+
+        // 6. ЗАГРУЗКА NFT TELEGRAM GIFTS (API TON / GETGEMS)
+        const sampleTelegramGifts = [
+            { id: '#225606', title: 'Happy Brownie', img: 'https://cdn-icons-png.flaticon.com/512/8146/8146767.png', price: '0.07' },
+            { id: '#102352', title: 'Crimson Gem', img: 'https://cdn-icons-png.flaticon.com/512/616/616490.png', price: '15.00' },
+            { id: '#304112', title: 'Astronaut Bear', img: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png', price: '8.50' },
+            { id: '#994811', title: 'Golden Clover', img: 'https://cdn-icons-png.flaticon.com/512/1043/1043444.png', price: '50.00' }
+        ];
+
         function loadNFTsFromAPI() {
             const container = document.getElementById('nft-container');
-            // Массив картинок (можно вставлять любые ссылки или получаемые из API)
-            const nfts = [
-                { id: '#225606', title: 'Happy Brownie', img: 'https://cdn-icons-png.flaticon.com/512/8146/8146767.png', price: '0.07' },
-                { id: '#102352', title: 'Crimson Gem', img: 'https://cdn-icons-png.flaticon.com/512/616/616490.png', price: '15.0' },
-                { id: '#304112', title: 'Timepiece Watch', img: 'https://cdn-icons-png.flaticon.com/512/2972/2972531.png', price: '2.5' }
-            ];
-
-            container.innerHTML = nfts.map(nft => `
+            container.innerHTML = sampleTelegramGifts.map(nft => `
                 <div class="nft-card">
                     <img src="${nft.img}" alt="${nft.title}">
-                    <div style="font-weight:bold; font-size:12px;">${nft.title}</div>
-                    <div style="font-size:10px; color:#aaa;">${nft.id}</div>
-                    <div style="font-size:11px; font-weight:bold; color:var(--accent-cyan); margin-top:4px;">💎 ${nft.price} LIR POINT</div>
+                    <div style="font-weight:bold; font-size:13px;">${nft.title}</div>
+                    <div style="font-size:10px; color:var(--accent-purple); font-weight:bold; margin-top:2px;">${nft.id}</div>
+                    <div style="font-size:12px; font-weight:900; color:var(--accent-cyan); margin: 6px 0;">💎 ${nft.price} LIR</div>
+                    <button class="btn-action" style="padding:6px; font-size:11px;" onclick="buyNFT('${nft.title}', ${nft.price})">Купить</button>
                 </div>
             `).join('');
         }
 
-        // Логика запуска игр
-        function openGame(gameType) {
-            const stage = document.getElementById('active-game-stage');
-            const content = document.getElementById('game-content');
-            stage.style.display = 'block';
+        // Отображение «Мои NFT» в Профиле
+        function loadMyNFTs() {
+            const container = document.getElementById('my-nfts-container');
+            const myGifts = [
+                { id: '#225606', title: 'Happy Brownie', img: 'https://cdn-icons-png.flaticon.com/512/8146/8146767.png' }
+            ];
 
-            if (gameType === 'wheel') {
-                content.innerHTML = `<h3>🎡 Колесо Фортуны</h3><p>Банк: 0 LIR POINT</p><button class="action-btn" style="background:var(--accent-purple);">Крутить (0.5 LIR)</button>`;
-            } else if (gameType === 'plinko') {
-                content.innerHTML = `<h3>🔻 Plinko</h3><p>Онлайн: 5920</p><button class="action-btn" style="background:var(--accent-gold); color:#000;">Бросить шар</button>`;
-            } else if (gameType === 'rocket') {
-                content.innerHTML = `<h3>🚀 Rocket</h3><p>Множитель: 1.00x</p><button class="action-btn">Ставка</button>`;
-            } else if (gameType === 'clover') {
-                content.innerHTML = `
-                    <h3>🍀 Кловер-Удача (#225606)</h3>
-                    <div style="font-size:30px; margin:10px;">☘️</div>
-                    <p style="font-size:12px;">Вероятность выиграть: <b>1%</b></p>
-                    <input type="range" min="1" max="95" value="1" style="width:80%;">
-                    <br><br>
-                    <button class="action-btn" style="background:var(--accent-gold); color:#000;">Испытать удачу (0.07 LIR POINT)</button>
-                `;
+            container.innerHTML = myGifts.map(nft => `
+                <div class="nft-card">
+                    <img src="${nft.img}" alt="${nft.title}">
+                    <div style="font-weight:bold; font-size:13px;">${nft.title}</div>
+                    <div style="font-size:10px; color:var(--accent-gold); font-weight:bold;">${nft.id}</div>
+                    <button class="btn-action" style="margin-top:8px; padding:6px; font-size:10px; background:rgba(255,255,255,0.1);" onclick="tg.showAlert('NFT перенесен в ваш Telegram инвентарь')">Вывести</button>
+                </div>
+            `).join('');
+        }
+
+        function buyNFT(title, price) {
+            if (userBalance >= price) {
+                userBalance -= price;
+                updateBalanceUI();
+                tg.showAlert(`🎉 Поздравляем! Вы приобрели ${title}`);
             } else {
-                content.innerHTML = `<h3>⚔️ Битва Участников</h3><p>Ожидание игроков...</p>`;
+                tg.showAlert("❌ Недостаточно LIR POINT. Пополните баланс.");
             }
         }
 
-        function closeGame() { document.getElementById('active-game-stage').style.display = 'none'; }
+        // 7. ПОЛНОЭКРАННЫЕ ИГРОВЫЕ ДВИЖКИ
+        function startFullscreenGame(type) {
+            const modal = document.getElementById('fullscreen-game-container');
+            const title = document.getElementById('game-modal-title');
+            const body = document.getElementById('game-modal-body');
 
-        loadNFTsFromAPI();
+            modal.classList.add('active');
+
+            if (type === 'wheel') {
+                title.innerText = "🎡 Колесо Фортуны";
+                body.innerHTML = `
+                    <div style="font-size:100px; margin-bottom:20px; animation: spin 4s infinite linear;">🎡</div>
+                    <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">Ставка: 5 LIR POINT</div>
+                    <button class="btn-action" style="width:200px; padding:14px;" onclick="playGameResult('Колесо Фортуны', 5, 2)">КРУТИТЬ (x2)</button>
+                `;
+            } else if (type === 'plinko') {
+                title.innerText = "🔻 Plinko Pyramid";
+                body.innerHTML = `
+                    <div style="font-size:80px; margin-bottom:20px;">🔻⚡🔻</div>
+                    <div style="font-size:14px; color:var(--text-secondary); margin-bottom:20px;">Шарик спускается по пинам к множителям x0.5 - x10</div>
+                    <button class="btn-action" style="width:200px; padding:14px; background:var(--accent-gold); color:#000;" onclick="playGameResult('Plinko', 2, 3)">БРОСИТЬ ШАР (2 LIR)</button>
+                `;
+            } else if (type === 'rocket') {
+                title.innerText = "🚀 Rocket Crash";
+                body.innerHTML = `
+                    <div style="font-size:90px; margin-bottom:10px;">🚀</div>
+                    <div style="font-size:32px; font-weight:900; color:var(--accent-cyan); margin-bottom:20px;">x1.84</div>
+                    <button class="btn-action" style="width:200px; padding:14px; background:var(--accent-red);" onclick="playGameResult('Rocket', 10, 1.84)">ЗАБРАТЬ ВЫИГРЫШ</button>
+                `;
+            } else if (type === 'battle') {
+                title.innerText = "⚔️ Колесо Битва (PvP)";
+                body.innerHTML = `
+                    <div style="font-size:70px; margin-bottom:10px;">⚔️</div>
+                    <p style="margin-bottom:20px; color:var(--text-secondary);">Поиск соперника для дуэли...</p>
+                    <button class="btn-action" style="width:200px; padding:14px;" onclick="playGameResult('Битва', 10, 2)">ВОЙТИ В БИТВУ (10 LIR)</button>
+                `;
+            } else if (type === 'clover') {
+                title.innerText = "🍀 Кловер-Удача (Upgrade Roll)";
+                body.innerHTML = `
+                    <div style="background:var(--card-bg); border:1px solid var(--card-border); padding:20px; border-radius:20px; width:90%; text-align:center;">
+                        <img src="https://cdn-icons-png.flaticon.com/512/8146/8146767.png" style="width:80px; height:80px; margin-bottom:10px;">
+                        <div style="font-weight:900;">Happy Brownie (#225606)</div>
+                        <div style="color:var(--accent-gold); font-size:12px; margin-bottom:14px;">Цена апгрейда: 0.07 LIR POINT</div>
+
+                        <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">Шанс успеха: <span id="clover-chance-val" style="color:var(--accent-green);">50%</span></div>
+                        <input type="range" min="1" max="95" value="50" style="width:100%;" oninput="document.getElementById('clover-chance-val').innerText = this.value + '%'">
+
+                        <button class="btn-action" style="margin-top:16px; padding:12px; background:linear-gradient(90deg, var(--accent-gold), var(--accent-green)); color:#000;" onclick="playGameResult('Кловер-Удача', 0.07, 2)">СДЕЛАТЬ ROLL</button>
+                    </div>
+                `;
+            }
+        }
+
+        function closeFullscreenGame() {
+            document.getElementById('fullscreen-game-container').classList.remove('active');
+        }
+
+        function playGameResult(gameName, cost, multiplier) {
+            if (userBalance >= cost) {
+                userBalance -= cost;
+                const win = Math.random() > 0.4; // 60% шанс выигрыша
+                if (win) {
+                    const prize = cost * multiplier;
+                    userBalance += prize;
+                    tg.showAlert(`🎉 ПОБЕДА в ${gameName}!\nВы выиграли ${prize.toFixed(2)} LIR POINT!`);
+                } else {
+                    tg.showAlert(`😢 Увы, ставка не сыграла в ${gameName}. Попробуйте ещё раз!`);
+                }
+                updateBalanceUI();
+            } else {
+                tg.showAlert("❌ Недостаточно средств на балансе!");
+            }
+        }
     </script>
 </body>
 </html>
