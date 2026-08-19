@@ -3,150 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Liroc App</title>
-    <!-- Официальный SDK Telegram Mini Apps -->
+    <title>LIROC App</title>
+    <!-- Подключаем Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* Цветовая палитра с макета */
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent-color: #38bdf8;
-            --text-color: #f8fafc;
-            --text-secondary: #94a3b8;
+            --bg-color: #111111; /* Глубокий черный */
+            --card-bg: #1a1a1a; /* Темно-серый для карточек */
+            --accent-main: #9c27b0; /* Фиолетовый (для кристаллов и кнопок) */
+            --accent-cyan: #00bcd4; /* Голубой (для акцентов) */
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
             margin: 0;
-            padding: 16px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 0;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            overflow: hidden; /* Запрещаем скролл всего боди */
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            min-height: 90vh;
         }
 
-        .user-card {
-            background-color: var(--card-bg);
+        /* Хедер */
+        .header {
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .logo { width: 24px; height: 24px; } /* Заглушка лого */
+        .app-title { font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .balance-pill {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .balance-icon { color: var(--accent-cyan); }
+
+        /* Основной контент-контейнер со скроллом */
+        .content-container {
+            flex: 1;
+            overflow-y: auto;
             padding: 16px;
+            padding-bottom: 80px; /* Место для навигации */
+        }
+
+        /* Главный рекламный баннер */
+        .promo-banner {
+            background: linear-gradient(135deg, #2a1a3a 0%, #1a1a1a 100%);
             border-radius: 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            padding: 20px;
+            border: 1px solid #333;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
         }
-
-        .user-avatar {
-            width: 48px;
-            height: 48px;
+        .promo-banner::after {
+            content: ''; position: absolute; top: -50px; right: -50px;
+            width: 150px; height: 150px;
+            background: radial-gradient(circle, rgba(156,39,176,0.3) 0%, rgba(0,0,0,0) 70%);
             border-radius: 50%;
-            background-color: var(--accent-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 20px;
-            color: #000;
+        }
+        .promo-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+        .promo-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; max-width: 70%; }
+        
+        .btn-main {
+            background-color: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-main:active { opacity: 0.8; }
+        .status-badge {
+            margin-left: 10px;
+            color: #ff9800; /* Оранжевый "СКОРО" */
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        .user-info h3 { margin: 0 0 4px 0; font-size: 16px; }
-        .user-info p { margin: 0; font-size: 13px; color: var(--text-secondary); }
+        /* Поиск и фильтры */
+        .search-bar {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
 
-        .stats-grid {
+        .filters-feed {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 16px;
+        }
+        .filters-feed::-webkit-scrollbar { display: none; } /* Скрываем скроллбар */
+        
+        .filter-btn {
+            background-color: var(--card-bg);
+            border: 1px solid #333;
+            color: var(--text-main);
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        /* Сетка предметов */
+        .items-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 24px;
         }
 
-        .stat-card {
-            background: var(--card-bg);
-            padding: 16px;
+        .item-card {
+            background-color: var(--card-bg);
             border-radius: 12px;
+            border: 1px solid #222;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-image-container {
+            height: 140px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+        /* Градиенты фонов карточек */
+        .card-red { background: radial-gradient(circle, #4a1a1a 0%, #1a1a1a 100%); }
+        .card-teal { background: radial-gradient(circle, #1a3a3a 0%, #1a1a1a 100%); }
+
+        .item-image-placeholder {
+            font-size: 40px;
+        }
+
+        .card-icon-top { position: absolute; top: 8px; right: 8px; color: rgba(255,255,255,0.5); font-size: 12px;}
+
+        .item-details { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+        .item-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+        .item-id { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+
+        .item-action-block { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 8px;}
+        
+        .btn-action-sm {
+            background-color: rgba(255,255,255,0.05);
+            color: var(--text-main);
+            border: 1px solid #333;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            flex: 1;
             text-align: center;
         }
+        .price-tag { font-size: 13px; font-weight: 700; color: var(--accent-cyan); }
 
-        .stat-card .value {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin-top: 4px;
-        }
-
-        .navigation {
-            margin-top: auto;
+        /* Нижняя Навигация */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background-color: #050505;
+            border-top: 1px solid #222;
             display: flex;
             justify-content: space-around;
-            background: var(--card-bg);
-            padding: 12px;
-            border-radius: 16px;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 100;
         }
 
-        .nav-btn {
-            background: none;
-            border: none;
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
+            font-size: 10px;
+            font-weight: 500;
+            text-decoration: none;
+            gap: 4px;
         }
 
-        .nav-btn.active { color: var(--accent-color); }
+        .nav-item.active { color: var(--text-main); }
+        .nav-icon { font-size: 20px; }
+        
+        /* Центральная кнопка Кузница */
+        .nav-item-forge {
+            position: relative;
+            top: -15px;
+            color: var(--accent-main) !important;
+        }
+        .forge-icon-wrap {
+            background-color: var(--bg-color);
+            border: 3px solid #050505;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 0 15px rgba(156,39,176,0.3);
+        }
+
+        /* Экраны (для переключения) */
+        .page-screen { display: none; }
+        .page-screen.active { display: block; }
+
     </style>
 </head>
 <body>
 
-    <!-- Шапка профиля -->
-    <div class="user-card">
-        <div class="user-avatar" id="avatar">L</div>
-        <div class="user-info">
-            <h3 id="user-name">Загрузка...</h3>
-            <p id="user-id">ID: ---</p>
+    <!-- Хедер -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">💎</div> <!-- В будущем заменить на IMG -->
+            <div class="app-title">LIROC</div>
+        </div>
+        <div class="balance-pill">
+            <span class="balance-icon">💎</span>
+            <span id="user-balance">--</span>
+            <span>+</span>
         </div>
     </div>
 
-    <!-- Балансы Liroc -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div>Пыль (Liroc Dust)</div>
-            <div class="value" id="dust-balance">0</div>
+    <!-- Основной контейнер с контентом -->
+    <div class="content-container">
+
+        <!-- ЭКРАН 1: МАСТЕРСКАЯ (ГЛАВНАЯ) -->
+        <div id="screen-workshop" class="page-screen active">
+            <!-- Баннер -->
+            <div class="promo-banner">
+                <div class="promo-title">Крафти редкие Liroc-активы<br>и зарабатывай TON! 💎</div>
+                <div class="promo-text">Создавай уникальные NFT в Кузнице. Испытай удачу в Арене прогнозов.</div>
+                <button class="btn-main">Начать крафт</button>
+                <span class="status-badge">СКОРО</span>
+            </div>
+
+            <!-- Поиск -->
+            <div class="search-bar">🔍 Поиск уникальных активов Liroc / NFT</div>
+
+            <!-- Фильтры -->
+            <div class="filters-feed">
+                <button class="filter-btn">Коллекции</button>
+                <button class="filter-btn">Уровни ∨</button>
+                <button class="filter-btn">Крафт ∨</button>
+                <button class="filter-btn">Торговля</button>
+            </div>
+
+            <!-- Сетка предметов -->
+            <div class="items-grid">
+                <!-- Карточка 1 -->
+                <div class="item-card">
+                    <div class="item-image-container card-red">
+                        <span class="card-icon-top">♣</span>
+                        <div class="item-image-placeholder">👑</div> <!-- Заглушка -->
+                    </div>
+                    <div class="item-details">
+                        <div class="item-name">Crimson Liroc Gem Crown</div>
+                        <div class="item-id">#LMK 0101</div>
+                        <div class="item-action-block">
+                            <button class="btn-action-sm">Купить в один клик</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Карточка 2 -->
+                <div class="item-card">
+                    <div class="item-image-container card-teal">
+                        <span class="card-icon-top">♣</span>
+                        <div class="item-image-placeholder">⌚</div> <!-- Заглушка -->
+                    </div>
+                    <div class="item-details">
+                        <div class="item-name">Snake-infused Timepiece</div>
+                        <div class="item-id">#LMK 0102</div>
+                        <div class="item-action-block">
+                            <span class="price-tag">💎 15.75</span>
+                            <button class="btn-action-sm">🛒</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div>Предметы</div>
-            <div class="value" id="items-count">0</div>
-        </div>
+
+        <!-- ЗАГЛУШКИ ДЛЯ ДРУГИХ ЭКРАНОВ -->
+        <div id="screen-arena" class="page-screen"><h2>Арена Прогнозов</h2><p>Скоро...</p></div>
+        <div id="screen-forge" class="page-screen"><h2>Кузница</h2><p>Место для крафта...</p></div>
+        <div id="screen-market" class="page-screen"><h2>Рынок</h2><p>Список лотов...</p></div>
+        <div id="screen-vault" class="page-screen"><h2>Хранилище</h2><p>Ваши активы...</p></div>
+
     </div>
 
     <!-- Нижняя навигация -->
-    <div class="navigation">
-        <button class="nav-btn active">Forge</button>
-        <button class="nav-btn">Predict</button>
-        <button class="nav-btn">Market</button>
-        <button class="nav-btn">Vault</button>
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="openPage('workshop', this)">
+            <span class="nav-icon">⚒</span>
+            <span>Мастерская</span>
+        </a>
+        <a href="#" class="nav-item" onclick="openPage('arena', this)">
+            <span class="nav-icon">🏆</span>
+            <span>Арена</span>
+        </a>
+        <a href="#" class="nav-item nav-item-forge" onclick="openPage('forge', this)">
+            <div class="forge-icon-wrap">🔮</div>
+            <span>Кузница</span>
+        </a>
+        <a href="#" class="nav-item" onclick="openPage('market', this)">
+            <span class="nav-icon">🔄</span>
+            <span>Рынок</span>
+        </a>
+        <a href="#" class="nav-item" onclick="openPage('vault', this)">
+            <span class="nav-icon">⚗</span>
+            <span>Хранилище</span>
+        </a>
     </div>
 
     <script>
-        // Инициализация Telegram Web App SDK
+        // Инициализация Telegram SDK
         const tg = window.Telegram.WebApp;
-        
-        // Расширяем окно на всю высоту
-        tg.expand();
+        tg.expand(); // Расширяем на весь экран
+        tg.ready();
 
-        // Получаем данные пользователя из Telegram
-        const user = tg.initDataUnsafe?.user;
+        // Устанавливаем цвета хедеру и бэкграунду в соответствии с темой TG (если нужно)
+        tg.setHeaderColor('#050505');
+        tg.setBackgroundColor('#111111');
 
-        if (user) {
-            document.getElementById('user-name').innerText = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-            document.getElementById('user-id').innerText = `ID: ${user.id}`;
-            document.getElementById('avatar').innerText = user.first_name[0] || 'L';
-        } else {
-            document.getElementById('user-name').innerText = 'Тестовый Пользователь';
-            document.getElementById('user-id').innerText = 'Запущено вне Telegram';
+        // Глобальные переменные данных пользователя
+        const userParams = tg.initDataUnsafe;
+
+        // Настройка кнопки BackButton (появляется, когда мы не на главной)
+        tg.BackButton.onClick(() => {
+            openPage('workshop', document.querySelector('.nav-item')); // На главную
+        });
+
+        // Функция переключения страниц
+        function openPage(pageName, navElement) {
+            // 1. Скрываем все экраны
+            document.querySelectorAll('.page-screen').forEach(screen => screen.classList.remove('active'));
+            // 2. Деактивируем все пункты меню
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+            // 3. Показываем нужный экран
+            document.getElementById('screen-' + pageName).classList.add('active');
+            // 4. Активируем пункт меню
+            navElement.classList.add('active');
+
+            // Управляем кнопкой "Назад"
+            if (pageName === 'workshop') {
+                tg.BackButton.hide();
+            } else {
+                tg.BackButton.show();
+            }
         }
 
-        // Сообщаем Telegram, что приложение готово к отображению
-        tg.ready();
+        // --- БЛОК ВЗАИМОДЕЙСТВИЯ С БЭКЕНДОМ ---
+
+        // Адрес твоего сервера (замени после деплоя)
+        const BACKEND_URL = 'http://127.0.0.1:8000'; 
+
+        // 1. Функция авторизации/загрузки данных пользователя
+        async function loadUserData() {
+            if (!userParams.user) {
+                document.getElementById('user-balance').innerText = 'Тест';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/user/init`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        telegram_id: userParams.user.id,
+                        first_name: userParams.user.first_name,
+                        username: userParams.user.username || ''
+                    })
+                });
+                const data = await response.json();
+                
+                // Обновляем баланс на экране
+                document.getElementById('user-balance').innerText = data.balance.toFixed(2);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error);
+                document.getElementById('user-balance').innerText = 'Err';
+            }
+        }
+
+        // Запускаем загрузку данных при старте
+        loadUserData();
+
     </script>
 </body>
 </html>
