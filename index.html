@@ -4,27 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>LIROC App</title>
-    <!-- Подключаем Telegram Web App SDK -->
+    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- TON Connect SDK -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
-        /* Цветовая палитра с макета */
         :root {
-            --bg-color: #111111; /* Глубокий черный */
-            --card-bg: #1a1a1a; /* Темно-серый для карточек */
-            --accent-main: #9c27b0; /* Фиолетовый (для кристаллов и кнопок) */
-            --accent-cyan: #00bcd4; /* Голубой (для акцентов) */
+            --bg-color: #111111;
+            --card-bg: #1a1a1a;
+            --accent-main: #9c27b0;
+            --accent-cyan: #00bcd4;
             --text-main: #ffffff;
             --text-secondary: #aaaaaa;
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: var(--font-family);
-            overflow: hidden; /* Запрещаем скролл всего боди */
+            overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -40,7 +40,6 @@
         }
 
         .header-left { display: flex; align-items: center; gap: 10px; }
-        .logo { width: 24px; height: 24px; } /* Заглушка лого */
         .app-title { font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         
         .balance-pill {
@@ -52,18 +51,22 @@
             gap: 6px;
             font-size: 14px;
             font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: border-color 0.2s;
         }
+        .balance-pill:active { border-color: var(--accent-cyan); }
         .balance-icon { color: var(--accent-cyan); }
 
-        /* Основной контент-контейнер со скроллом */
+        /* Контент-контейнер */
         .content-container {
             flex: 1;
             overflow-y: auto;
             padding: 16px;
-            padding-bottom: 80px; /* Место для навигации */
+            padding-bottom: 80px;
         }
 
-        /* Главный рекламный баннер */
+        /* Рекламный баннер */
         .promo-banner {
             background: linear-gradient(135deg, #2a1a3a 0%, #1a1a1a 100%);
             border-radius: 16px;
@@ -72,12 +75,6 @@
             margin-bottom: 20px;
             position: relative;
             overflow: hidden;
-        }
-        .promo-banner::after {
-            content: ''; position: absolute; top: -50px; right: -50px;
-            width: 150px; height: 150px;
-            background: radial-gradient(circle, rgba(156,39,176,0.3) 0%, rgba(0,0,0,0) 70%);
-            border-radius: 50%;
         }
         .promo-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
         .promo-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; max-width: 70%; }
@@ -91,15 +88,8 @@
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        .btn-main:active { opacity: 0.8; }
-        .status-badge {
-            margin-left: 10px;
-            color: #ff9800; /* Оранжевый "СКОРО" */
-            font-size: 12px;
-            font-weight: 600;
-        }
+        .status-badge { margin-left: 10px; color: #ff9800; font-size: 12px; font-weight: 600; }
 
         /* Поиск и фильтры */
         .search-bar {
@@ -113,13 +103,9 @@
         }
 
         .filters-feed {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            margin-bottom: 16px;
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px;
         }
-        .filters-feed::-webkit-scrollbar { display: none; } /* Скрываем скроллбар */
+        .filters-feed::-webkit-scrollbar { display: none; }
         
         .filter-btn {
             background-color: var(--card-bg);
@@ -132,37 +118,23 @@
         }
 
         /* Сетка предметов */
-        .items-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
         .item-card {
             background-color: var(--card-bg);
             border-radius: 12px;
             border: 1px solid #222;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
         .item-image-container {
-            height: 140px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
+            height: 140px; position: relative; display: flex; justify-content: center; align-items: center; padding: 10px;
         }
-        /* Градиенты фонов карточек */
         .card-red { background: radial-gradient(circle, #4a1a1a 0%, #1a1a1a 100%); }
         .card-teal { background: radial-gradient(circle, #1a3a3a 0%, #1a1a1a 100%); }
 
-        .item-image-placeholder {
-            font-size: 40px;
-        }
-
+        .item-image-placeholder { font-size: 40px; }
         .card-icon-top { position: absolute; top: 8px; right: 8px; color: rgba(255,255,255,0.5); font-size: 12px;}
 
         .item-details { padding: 12px; flex: 1; display: flex; flex-direction: column; }
@@ -170,72 +142,45 @@
         .item-id { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
 
         .item-action-block { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 8px;}
-        
         .btn-action-sm {
-            background-color: rgba(255,255,255,0.05);
-            color: var(--text-main);
-            border: 1px solid #333;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            flex: 1;
-            text-align: center;
+            background-color: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid #333; padding: 6px 10px; border-radius: 6px; font-size: 11px; flex: 1; text-align: center;
         }
         .price-tag { font-size: 13px; font-weight: 700; color: var(--accent-cyan); }
 
         /* Нижняя Навигация */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background-color: #050505;
-            border-top: 1px solid #222;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 10px;
-            z-index: 100;
+            position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
+            background-color: #050505; border-top: 1px solid #222;
+            display: flex; justify-content: space-around; align-items: center; padding: 0 10px; z-index: 100;
         }
 
         .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--text-secondary);
-            font-size: 10px;
-            font-weight: 500;
-            text-decoration: none;
-            gap: 4px;
+            display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); font-size: 10px; font-weight: 500; text-decoration: none; gap: 4px;
         }
-
         .nav-item.active { color: var(--text-main); }
         .nav-icon { font-size: 20px; }
         
-        /* Центральная кнопка Кузница */
-        .nav-item-forge {
-            position: relative;
-            top: -15px;
-            color: var(--accent-main) !important;
-        }
+        .nav-item-forge { position: relative; top: -15px; color: var(--accent-main) !important; }
         .forge-icon-wrap {
-            background-color: var(--bg-color);
-            border: 3px solid #050505;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            box-shadow: 0 0 15px rgba(156,39,176,0.3);
+            background-color: var(--bg-color); border: 3px solid #050505; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 0 15px rgba(156,39,176,0.3);
         }
 
-        /* Экраны (для переключения) */
         .page-screen { display: none; }
         .page-screen.active { display: block; }
 
+        /* Модальное окно пополнения */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-card {
+            background: #1a1a1a; padding: 20px; border-radius: 16px; width: 85%; max-width: 320px; border: 1px solid #333; text-align: center;
+        }
+        .pay-btn {
+            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; border: 1px solid;
+        }
+        .pay-stars { background: #2a1a3a; color: #fff; border-color: #9c27b0; }
+        .pay-ton { background: #1a3a3a; color: #fff; border-color: #00bcd4; }
     </style>
 </head>
 <body>
@@ -243,22 +188,20 @@
     <!-- Хедер -->
     <div class="header">
         <div class="header-left">
-            <div class="logo">💎</div> <!-- В будущем заменить на IMG -->
+            <div class="logo">💎</div>
             <div class="app-title">LIROC</div>
         </div>
-        <div class="balance-pill">
+        <div class="balance-pill" onclick="openTopupModal()">
             <span class="balance-icon">💎</span>
             <span id="user-balance">--</span>
             <span>+</span>
         </div>
     </div>
 
-    <!-- Основной контейнер с контентом -->
+    <!-- Основной контейнер -->
     <div class="content-container">
-
-        <!-- ЭКРАН 1: МАСТЕРСКАЯ (ГЛАВНАЯ) -->
+        <!-- ЭКРАН 1: МАСТЕРСКАЯ -->
         <div id="screen-workshop" class="page-screen active">
-            <!-- Баннер -->
             <div class="promo-banner">
                 <div class="promo-title">Крафти редкие Liroc-активы<br>и зарабатывай TON! 💎</div>
                 <div class="promo-text">Создавай уникальные NFT в Кузнице. Испытай удачу в Арене прогнозов.</div>
@@ -266,10 +209,8 @@
                 <span class="status-badge">СКОРО</span>
             </div>
 
-            <!-- Поиск -->
             <div class="search-bar">🔍 Поиск уникальных активов Liroc / NFT</div>
 
-            <!-- Фильтры -->
             <div class="filters-feed">
                 <button class="filter-btn">Коллекции</button>
                 <button class="filter-btn">Уровни ∨</button>
@@ -277,13 +218,11 @@
                 <button class="filter-btn">Торговля</button>
             </div>
 
-            <!-- Сетка предметов -->
             <div class="items-grid">
-                <!-- Карточка 1 -->
                 <div class="item-card">
                     <div class="item-image-container card-red">
                         <span class="card-icon-top">♣</span>
-                        <div class="item-image-placeholder">👑</div> <!-- Заглушка -->
+                        <div class="item-image-placeholder">👑</div>
                     </div>
                     <div class="item-details">
                         <div class="item-name">Crimson Liroc Gem Crown</div>
@@ -293,11 +232,11 @@
                         </div>
                     </div>
                 </div>
-                <!-- Карточка 2 -->
+
                 <div class="item-card">
                     <div class="item-image-container card-teal">
                         <span class="card-icon-top">♣</span>
-                        <div class="item-image-placeholder">⌚</div> <!-- Заглушка -->
+                        <div class="item-image-placeholder">⌚</div>
                     </div>
                     <div class="item-details">
                         <div class="item-name">Snake-infused Timepiece</div>
@@ -311,85 +250,88 @@
             </div>
         </div>
 
-        <!-- ЗАГЛУШКИ ДЛЯ ДРУГИХ ЭКРАНОВ -->
+        <!-- ДРУГИЕ ЭКРАНЫ -->
         <div id="screen-arena" class="page-screen"><h2>Арена Прогнозов</h2><p>Скоро...</p></div>
         <div id="screen-forge" class="page-screen"><h2>Кузница</h2><p>Место для крафта...</p></div>
         <div id="screen-market" class="page-screen"><h2>Рынок</h2><p>Список лотов...</p></div>
         <div id="screen-vault" class="page-screen"><h2>Хранилище</h2><p>Ваши активы...</p></div>
-
     </div>
 
-    <!-- Нижняя навигация -->
+    <!-- Навигация -->
     <div class="bottom-nav">
         <a href="#" class="nav-item active" onclick="openPage('workshop', this)">
-            <span class="nav-icon">⚒</span>
-            <span>Мастерская</span>
+            <span class="nav-icon">⚒</span><span>Мастерская</span>
         </a>
         <a href="#" class="nav-item" onclick="openPage('arena', this)">
-            <span class="nav-icon">🏆</span>
-            <span>Арена</span>
+            <span class="nav-icon">🏆</span><span>Арена</span>
         </a>
         <a href="#" class="nav-item nav-item-forge" onclick="openPage('forge', this)">
-            <div class="forge-icon-wrap">🔮</div>
-            <span>Кузница</span>
+            <div class="forge-icon-wrap">🔮</div><span>Кузница</span>
         </a>
         <a href="#" class="nav-item" onclick="openPage('market', this)">
-            <span class="nav-icon">🔄</span>
-            <span>Рынок</span>
+            <span class="nav-icon">🔄</span><span>Рынок</span>
         </a>
         <a href="#" class="nav-item" onclick="openPage('vault', this)">
-            <span class="nav-icon">⚗</span>
-            <span>Хранилище</span>
+            <span class="nav-icon">⚗</span><span>Хранилище</span>
         </a>
+    </div>
+
+    <!-- Модальное окно пополнения -->
+    <div id="topup-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0;">Пополнение баланса</h3>
+            <p style="font-size:12px; color:#aaa; margin-bottom:15px;">Выберите удобный способ оплаты:</p>
+            
+            <button class="pay-btn pay-stars" onclick="payWithStars(50)">
+                ⭐ Telegram Stars (50 Stars = 500 💎)
+            </button>
+
+            <button class="pay-btn pay-ton" onclick="payWithTon(0.5)">
+                💎 TON Wallet (0.5 TON = 1000 💎)
+            </button>
+
+            <button onclick="closeTopupModal()" style="background:none; border:none; color:#aaa; margin-top:10px; cursor:pointer;">Закрыть</button>
+        </div>
     </div>
 
     <script>
-        // Инициализация Telegram SDK
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем на весь экран
+        tg.expand();
         tg.ready();
-
-        // Устанавливаем цвета хедеру и бэкграунду в соответствии с темой TG (если нужно)
         tg.setHeaderColor('#050505');
         tg.setBackgroundColor('#111111');
 
-        // Глобальные переменные данных пользователя
         const userParams = tg.initDataUnsafe;
 
-        // Настройка кнопки BackButton (появляется, когда мы не на главной)
-        tg.BackButton.onClick(() => {
-            openPage('workshop', document.querySelector('.nav-item')); // На главную
-        });
-
-        // Функция переключения страниц
-        function openPage(pageName, navElement) {
-            // 1. Скрываем все экраны
-            document.querySelectorAll('.page-screen').forEach(screen => screen.classList.remove('active'));
-            // 2. Деактивируем все пункты меню
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-
-            // 3. Показываем нужный экран
-            document.getElementById('screen-' + pageName).classList.add('active');
-            // 4. Активируем пункт меню
-            navElement.classList.add('active');
-
-            // Управляем кнопкой "Назад"
-            if (pageName === 'workshop') {
-                tg.BackButton.hide();
-            } else {
-                tg.BackButton.show();
-            }
-        }
-
-        // --- БЛОК ВЗАИМОДЕЙСТВИЯ С БЭКЕНДОМ ---
-
-        // Адрес твоего сервера (замени после деплоя)
+        // ВАЖНО: Замени на адрес своего задеплоенного бэкенда!
         const BACKEND_URL = 'http://127.0.0.1:8000'; 
 
-        // 1. Функция авторизации/загрузки данных пользователя
+        // Инициализация TON Connect UI
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: window.location.origin + '/tonconnect-manifest.json',
+        });
+
+        // Кнопка Назад
+        tg.BackButton.onClick(() => openPage('workshop', document.querySelector('.nav-item')));
+
+        function openPage(pageName, navElement) {
+            document.querySelectorAll('.page-screen').forEach(screen => screen.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+            document.getElementById('screen-' + pageName).classList.add('active');
+            navElement.classList.add('active');
+
+            if (pageName === 'workshop') { tg.BackButton.hide(); } else { tg.BackButton.show(); }
+        }
+
+        // Логика Модалки
+        function openTopupModal() { document.getElementById('topup-modal').style.display = 'flex'; }
+        function closeTopupModal() { document.getElementById('topup-modal').style.display = 'none'; }
+
+        // Загрузка Данных Юзера
         async function loadUserData() {
             if (!userParams.user) {
-                document.getElementById('user-balance').innerText = 'Тест';
+                document.getElementById('user-balance').innerText = '100';
                 return;
             }
 
@@ -400,23 +342,76 @@
                     body: JSON.stringify({
                         telegram_id: userParams.user.id,
                         first_name: userParams.user.first_name,
-                        username: userParams.user.username || ''
+                        username: userParams.user.username || '',
+                        init_data: tg.initData
                     })
                 });
                 const data = await response.json();
-                
-                // Обновляем баланс на экране
-                document.getElementById('user-balance').innerText = data.balance.toFixed(2);
-                
+                document.getElementById('user-balance').innerText = data.balance.toFixed(0);
             } catch (error) {
-                console.error('Ошибка загрузки данных:', error);
-                document.getElementById('user-balance').innerText = 'Err';
+                console.error('Ошибка:', error);
             }
         }
 
-        // Запускаем загрузку данных при старте
-        loadUserData();
+        // Оплата Stars
+        async function payWithStars(starsCount) {
+            closeTopupModal();
+            const userId = userParams.user?.id || 12345;
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/pay/create-stars-invoice?user_id=${userId}&amount_stars=${starsCount}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
 
+                if (data.invoice_url) {
+                    tg.openInvoice(data.invoice_url, (status) => {
+                        if (status === 'paid') {
+                            tg.showAlert('Оплата прошла! Баланс пополнен.');
+                            loadUserData();
+                        }
+                    });
+                }
+            } catch (e) {
+                tg.showAlert('Ошибка создания счета Stars');
+            }
+        }
+
+        // Оплата TON
+        async function payWithTon(tonAmount) {
+            closeTopupModal();
+            if (!tonConnectUI.connected) {
+                await tonConnectUI.openModal();
+                return;
+            }
+
+            const PROJECT_WALLET = "UQB4IFTwO6RysL94ag5rKPHxwp68XV6gP093As_zL_7789HZ"; 
+
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 600,
+                messages: [{
+                    address: PROJECT_WALLET,
+                    amount: (tonAmount * 1e9).toString(),
+                }]
+            };
+
+            try {
+                const result = await tonConnectUI.sendTransaction(transaction);
+                const userId = userParams.user?.id || 12345;
+                
+                await fetch(`${BACKEND_URL}/api/pay/confirm-ton`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, tx_boc: result.boc })
+                });
+
+                tg.showAlert('Транзакция отправлена! Баланс зачислен.');
+                loadUserData();
+            } catch (e) {
+                tg.showAlert('Транзакция отменена.');
+            }
+        }
+
+        loadUserData();
     </script>
 </body>
 </html>
