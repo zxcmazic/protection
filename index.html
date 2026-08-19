@@ -348,266 +348,235 @@
         <a href="#" class="nav-btn" onclick="openPage('market', this)"><span class="nav-icon">🔄</span><span>Рынок</span></a>
     </div>
     <script>
-        // 1. ИНИЦИАЛИЗАЦИЯ TELEGRAM И TON CONNECT
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.ready();
 
-        const user = tg.initDataUnsafe?.user;
-        let userBalance = 100.00; // Стартовый баланс LIR POINT
+    const user = tg.initDataUnsafe?.user;
+    
+    // 1. Фикс сброса баланса: читаем из localStorage или ставим 100 по умолчанию
+    const storageKey = user ? `lir_balance_${user.id}` : 'lir_balance_guest';
+    let userBalance = parseFloat(localStorage.getItem(storageKey)) || 100.00;
 
-        // TON Connect UI
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-community/ton-connect-manifest/main/tonconnect-manifest.json'
-        });
+    // Adsgram SDK
+    let AdController = null;
+    if (window.Adsgram) {
+        AdController = window.Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
+    }
 
-        // Adsgram реклама
-        let AdController = null;
-        if (window.Adsgram) {
-            // Замените 'YOUR_BLOCK_ID' на ваш ID блока Adsgram
-            AdController = window.Adsgram.init({ blockId: "YOUR_BLOCK_ID" });
-        }
+    window.addEventListener('DOMContentLoaded', () => {
+        updateBalanceUI();
+        initUserProfile();
+        loadNFTsFromAPI();
+        loadMyNFTs();
+        showAdsgramAd(true);
+    });
 
-        // Автоматический показ рекламы при старте (Adsgram)
-        window.addEventListener('DOMContentLoaded', () => {
-            updateBalanceUI();
-            initUserProfile();
-            loadNFTsFromAPI();
-            loadMyNFTs();
-
-            // Вызов рекламы Adsgram при входе
-            showAdsgramAd(true);
-        });
-
-        // 2. ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ И БАЛАНС
-        function initUserProfile() {
-            if (user) {
-                document.getElementById('profile-name').innerText = `${user.first_name} ${user.last_name || ''}`;
-                if (user.photo_url) {
-                    const avatarHtml = `<img src="${user.photo_url}" alt="Avatar">`;
-                    document.getElementById('user-avatar').innerHTML = avatarHtml;
-                    document.getElementById('profile-avatar-large').innerHTML = avatarHtml;
-                }
+    function initUserProfile() {
+        if (user) {
+            document.getElementById('profile-name').innerText = `${user.first_name} ${user.last_name || ''}`;
+            if (user.photo_url) {
+                const avatarHtml = `<img src="${user.photo_url}" alt="Avatar">`;
+                document.getElementById('user-avatar').innerHTML = avatarHtml;
+                document.getElementById('profile-avatar-large').innerHTML = avatarHtml;
             }
         }
+    }
 
-        function updateBalanceUI() {
-            document.getElementById('user-balance').innerText = userBalance.toFixed(2);
-            document.getElementById('profile-balance').innerText = userBalance.toFixed(2);
-        }
+    // Сохранение и обновление баланса
+    function updateBalanceUI() {
+        userBalance = Number(userBalance);
+        localStorage.setItem(storageKey, userBalance.toString());
+        
+        document.getElementById('user-balance').innerText = userBalance.toFixed(2);
+        document.getElementById('profile-balance').innerText = userBalance.toFixed(2);
+    }
 
-        // 3. ADSGRAM РЕКЛАМА
-        function showAdsgramAd(isInitial = false) {
-            if (AdController) {
-                AdController.show().then((result) => {
-                    userBalance += 10;
-                    updateBalanceUI();
-                    tg.showAlert("📺 Спасибо за просмотр! Вам начислено +10 LIR POINT");
-                }).catch((result) => {
-                    if (!isInitial) tg.showAlert("Реклама временно недоступна или была пропущена.");
+    // 2. Оплата Telegram Stars через бэкенд
+    async function payWithStars() {
+        closeTopupModal();
+        tg.showAlert("⏳ Создание счета Stars...");
+
+        try {
+            // Запрос к твоему Python-серверу за ссылкой на оплату
+            const response = await fetch('/api/create-stars-invoice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user?.id, amount: 100 })
+            });
+            const data = await response.json();
+
+            if (data.invoiceUrl) {
+                tg.openInvoice(data.invoiceUrl, (status) => {
+                    if (status === 'paid') {
+                        userBalance += 100;
+                        updateBalanceUI();
+                        tg.showAlert("⭐ Успешно! Баланс пополнен на 100 LIR POINT.");
+                    }
                 });
             } else {
-                if (!isInitial) {
-                    // Симуляция в случае тестового режима без Adsgram ID
-                    userBalance += 10;
-                    updateBalanceUI();
-                    tg.showAlert("📺 [DEMO] Начислено +10 LIR POINT за просмотр рекламы.");
-                }
+                // Демо-начисление если бэкенд ещё не подключен
+                userBalance += 100;
+                updateBalanceUI();
+                tg.showAlert("⭐ [Тестовый режим] Баланс пополнен на 100 LIR POINT!");
             }
-        }
-
-        // 4. ПОПОЛНЕНИЕ (STARS И TON)
-        function openTopupModal() { document.getElementById('topup-modal').style.display = 'flex'; }
-        function closeTopupModal() { document.getElementById('topup-modal').style.display = 'none'; }
-
-        // Пополнение через Telegram Stars
-        function payWithStars() {
-            closeTopupModal();
-            // Вызов счета в боте для Stars через WebApp API
-            tg.openInvoice({
-                title: '100 LIR POINT',
-                description: 'Пополнение баланса в приложения LIROC',
-                payload: 'topup_stars_100',
-                currency: 'XTR',
-                prices: [{ label: '100 Stars', amount: 100 }]
-            }, (status) => {
-                if (status === 'paid') {
-                    userBalance += 100;
-                    updateBalanceUI();
-                    tg.showAlert("⭐ Баланс успешно пополнен на 100 LIR POINT!");
-                }
-            });
-        }
-
-        // Пополнение через TON
-        async function payWithTON() {
-            closeTopupModal();
-            if (!tonConnectUI.connected) {
-                await tonConnectUI.openModal();
-            } else {
-                const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 60,
-                    messages: [{
-                        address: "EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c", // Адрес кошелька
-                        amount: "1000000000" // 1 TON в нанотонах
-                    }]
-                };
-                try {
-                    await tonConnectUI.sendTransaction(transaction);
-                    userBalance += 250;
-                    updateBalanceUI();
-                    tg.showAlert("💎 Оплата прошла успешно! +250 LIR POINT");
-                } catch (e) {
-                    tg.showAlert("Ошибка или отмена транзакции.");
-                }
-            }
-        }
-
-        // Ежедневный бонус и вывод
-        function claimDailyBonus() {
-            userBalance += 15;
+        } catch (e) {
+            // Фолбэк для локального тестирования
+            userBalance += 100;
             updateBalanceUI();
-            document.getElementById('btn-bonus').disabled = true;
-            document.getElementById('btn-bonus').innerText = '✅ Получено';
-            tg.showAlert("🎁 Вы получили ежедневный бонус +15 LIR POINT!");
+            tg.showAlert("⭐ [Тест] Пополнено 100 LIR POINT.");
+        }
+    }
+
+    // 3. Исправление ежедневного бонуса
+    function claimDailyBonus() {
+        const lastClaim = localStorage.getItem(`bonus_${user?.id}`);
+        const today = new Date().toDateString();
+
+        if (lastClaim === today) {
+            tg.showAlert("⏳ Вы уже получали бонус сегодня! Приходите завтра.");
+            return;
         }
 
-        function openWithdrawModal() {
-            tg.showAlert("⬆ Заявка на вывод отправлена на проверку администратору.");
+        userBalance = Number(userBalance) + 15; // Точное математическое сложение
+        localStorage.setItem(`bonus_${user?.id}`, today);
+        updateBalanceUI();
+
+        document.getElementById('btn-bonus').disabled = true;
+        document.getElementById('btn-bonus').innerText = '✅ Получено';
+        tg.showAlert("🎁 Вам начислено +15 LIR POINT!");
+    }
+
+    // 4. Реальная отправка заявки на вывод
+    function openWithdrawModal() {
+        const amount = prompt("Введите сумму вывода LIR POINT:", "50");
+        if (!amount || isNaN(amount) || amount <= 0) return;
+
+        if (Number(amount) > userBalance) {
+            tg.showAlert("❌ Недостаточно средств на балансе!");
+            return;
         }
 
-        // 5. НАВИГАЦИЯ МЕЖДУ ЭКРАНАМИ
-        function openPage(pageName, btnElement) {
-            document.querySelectorAll('.page-screen').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        const wallet = prompt("Введите ваш TON адрес или Telegram @username:");
+        if (!wallet) return;
 
-            document.getElementById('screen-' + pageName).classList.add('active');
-            if (btnElement) {
-                btnElement.classList.add('active');
-            }
-        }
+        // Отправляем данные прямо в чат боту
+        const withdrawData = {
+            action: "withdraw_request",
+            userId: user?.id,
+            username: user?.username,
+            amount: Number(amount),
+            wallet: wallet
+        };
 
-        // 6. ЗАГРУЗКА NFT TELEGRAM GIFTS (API TON / GETGEMS)
-        const sampleTelegramGifts = [
-            { id: '#225606', title: 'Happy Brownie', img: 'https://cdn-icons-png.flaticon.com/512/8146/8146767.png', price: '0.07' },
-            { id: '#102352', title: 'Crimson Gem', img: 'https://cdn-icons-png.flaticon.com/512/616/616490.png', price: '15.00' },
-            { id: '#304112', title: 'Astronaut Bear', img: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png', price: '8.50' },
-            { id: '#994811', title: 'Golden Clover', img: 'https://cdn-icons-png.flaticon.com/512/1043/1043444.png', price: '50.00' }
-        ];
+        tg.sendData(JSON.stringify(withdrawData));
+        
+        userBalance -= Number(amount);
+        updateBalanceUI();
+        tg.showAlert("🚀 Заявка на вывод отправлена администратору в чат с ботом!");
+    }
 
-        function loadNFTsFromAPI() {
-            const container = document.getElementById('nft-container');
-            container.innerHTML = sampleTelegramGifts.map(nft => `
-                <div class="nft-card">
-                    <img src="${nft.img}" alt="${nft.title}">
-                    <div style="font-weight:bold; font-size:13px;">${nft.title}</div>
-                    <div style="font-size:10px; color:var(--accent-purple); font-weight:bold; margin-top:2px;">${nft.id}</div>
-                    <div style="font-size:12px; font-weight:900; color:var(--accent-cyan); margin: 6px 0;">💎 ${nft.price} LIR</div>
-                    <button class="btn-action" style="padding:6px; font-size:11px;" onclick="buyNFT('${nft.title}', ${nft.price})">Купить</button>
+    // 5. Исправление залипания полноэкранных игр
+    function startFullscreenGame(type) {
+        const modal = document.getElementById('fullscreen-game-container');
+        const title = document.getElementById('game-modal-title');
+        const body = document.getElementById('game-modal-body');
+
+        body.innerHTML = ''; // Полный сброс предыдущей игры
+        modal.classList.add('active');
+
+        if (type === 'wheel') {
+            title.innerText = "🎡 Колесо Фортуны";
+            body.innerHTML = `
+                <div style="font-size:90px; margin-bottom:15px;">🎡</div>
+                <div style="font-weight:bold; margin-bottom:15px;">Ставка: 5 LIR POINT</div>
+                <button class="btn-action" style="width:200px; padding:14px;" onclick="playGameResult('Колесо', 5, 2)">КРУТИТЬ (x2)</button>
+            `;
+        } else if (type === 'plinko') {
+            title.innerText = "🔻 Plinko";
+            body.innerHTML = `
+                <div style="font-size:80px; margin-bottom:15px;">🔻⚡🔻</div>
+                <button class="btn-action" style="width:200px; padding:14px; background:var(--accent-gold); color:#000;" onclick="playGameResult('Plinko', 2, 2.5)">БРОСИТЬ ШАР (2 LIR)</button>
+            `;
+        } else if (type === 'rocket') {
+            title.innerText = "🚀 Rocket";
+            body.innerHTML = `
+                <div style="font-size:80px; margin-bottom:15px;">🚀</div>
+                <button class="btn-action" style="width:200px; padding:14px; background:var(--accent-red);" onclick="playGameResult('Rocket', 10, 1.8)">ЗАБРАТЬ (10 LIR)</button>
+            `;
+        } else if (type === 'clover') {
+            title.innerText = "🍀 Кловер-Удача";
+            body.innerHTML = `
+                <div style="background:var(--card-bg); border:1px solid var(--card-border); padding:20px; border-radius:20px; width:85%; text-align:center;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/8146/8146767.png" style="width:70px; margin-bottom:10px;">
+                    <div style="font-size:13px; font-weight:bold; margin-bottom:10px;">Happy Brownie (#225606)</div>
+                    <div style="font-size:12px; margin-bottom:6px;">Шанс: <b id="clover-val" style="color:var(--accent-green);">50%</b></div>
+                    <input type="range" min="1" max="95" value="50" style="width:100%;" oninput="document.getElementById('clover-val').innerText = this.value + '%'">
+                    <button class="btn-action" style="margin-top:15px; padding:12px; background:var(--accent-gold); color:#000;" onclick="playGameResult('Кловер', 0.07, 2)">КРУТИТЬ (0.07 LIR)</button>
                 </div>
-            `).join('');
+            `;
         }
+    }
 
-        // Отображение «Мои NFT» в Профиле
-        function loadMyNFTs() {
-            const container = document.getElementById('my-nfts-container');
-            const myGifts = [
-                { id: '#225606', title: 'Happy Brownie', img: 'https://cdn-icons-png.flaticon.com/512/8146/8146767.png' }
-            ];
+    function closeFullscreenGame() {
+        const modal = document.getElementById('fullscreen-game-container');
+        const body = document.getElementById('game-modal-body');
+        modal.classList.remove('active');
+        body.innerHTML = ''; // Очищаем контейнер, чтобы игра не зависала
+    }
 
-            container.innerHTML = myGifts.map(nft => `
-                <div class="nft-card">
-                    <img src="${nft.img}" alt="${nft.title}">
-                    <div style="font-weight:bold; font-size:13px;">${nft.title}</div>
-                    <div style="font-size:10px; color:var(--accent-gold); font-weight:bold;">${nft.id}</div>
-                    <button class="btn-action" style="margin-top:8px; padding:6px; font-size:10px; background:rgba(255,255,255,0.1);" onclick="tg.showAlert('NFT перенесен в ваш Telegram инвентарь')">Вывести</button>
-                </div>
-            `).join('');
-        }
-
-        function buyNFT(title, price) {
-            if (userBalance >= price) {
-                userBalance -= price;
-                updateBalanceUI();
-                tg.showAlert(`🎉 Поздравляем! Вы приобрели ${title}`);
+    function playGameResult(gameName, cost, multiplier) {
+        if (userBalance >= cost) {
+            userBalance -= cost;
+            const win = Math.random() > 0.45;
+            if (win) {
+                const prize = cost * multiplier;
+                userBalance += prize;
+                tg.showAlert(`🎉 ВЫИГРЫШ в ${gameName}!\n+${prize.toFixed(2)} LIR POINT`);
             } else {
-                tg.showAlert("❌ Недостаточно LIR POINT. Пополните баланс.");
+                tg.showAlert(`😢 Проигрыш в ${gameName}. Попробуйте еще раз!`);
             }
+            updateBalanceUI();
+        } else {
+            tg.showAlert("❌ Недостаточно средств на балансе!");
         }
+    }
 
-        // 7. ПОЛНОЭКРАННЫЕ ИГРОВЫЕ ДВИЖКИ
-        function startFullscreenGame(type) {
-            const modal = document.getElementById('fullscreen-game-container');
-            const title = document.getElementById('game-modal-title');
-            const body = document.getElementById('game-modal-body');
-
-            modal.classList.add('active');
-
-            if (type === 'wheel') {
-                title.innerText = "🎡 Колесо Фортуны";
-                body.innerHTML = `
-                    <div style="font-size:100px; margin-bottom:20px; animation: spin 4s infinite linear;">🎡</div>
-                    <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">Ставка: 5 LIR POINT</div>
-                    <button class="btn-action" style="width:200px; padding:14px;" onclick="playGameResult('Колесо Фортуны', 5, 2)">КРУТИТЬ (x2)</button>
-                `;
-            } else if (type === 'plinko') {
-                title.innerText = "🔻 Plinko Pyramid";
-                body.innerHTML = `
-                    <div style="font-size:80px; margin-bottom:20px;">🔻⚡🔻</div>
-                    <div style="font-size:14px; color:var(--text-secondary); margin-bottom:20px;">Шарик спускается по пинам к множителям x0.5 - x10</div>
-                    <button class="btn-action" style="width:200px; padding:14px; background:var(--accent-gold); color:#000;" onclick="playGameResult('Plinko', 2, 3)">БРОСИТЬ ШАР (2 LIR)</button>
-                `;
-            } else if (type === 'rocket') {
-                title.innerText = "🚀 Rocket Crash";
-                body.innerHTML = `
-                    <div style="font-size:90px; margin-bottom:10px;">🚀</div>
-                    <div style="font-size:32px; font-weight:900; color:var(--accent-cyan); margin-bottom:20px;">x1.84</div>
-                    <button class="btn-action" style="width:200px; padding:14px; background:var(--accent-red);" onclick="playGameResult('Rocket', 10, 1.84)">ЗАБРАТЬ ВЫИГРЫШ</button>
-                `;
-            } else if (type === 'battle') {
-                title.innerText = "⚔️ Колесо Битва (PvP)";
-                body.innerHTML = `
-                    <div style="font-size:70px; margin-bottom:10px;">⚔️</div>
-                    <p style="margin-bottom:20px; color:var(--text-secondary);">Поиск соперника для дуэли...</p>
-                    <button class="btn-action" style="width:200px; padding:14px;" onclick="playGameResult('Битва', 10, 2)">ВОЙТИ В БИТВУ (10 LIR)</button>
-                `;
-            } else if (type === 'clover') {
-                title.innerText = "🍀 Кловер-Удача (Upgrade Roll)";
-                body.innerHTML = `
-                    <div style="background:var(--card-bg); border:1px solid var(--card-border); padding:20px; border-radius:20px; width:90%; text-align:center;">
-                        <img src="https://cdn-icons-png.flaticon.com/512/8146/8146767.png" style="width:80px; height:80px; margin-bottom:10px;">
-                        <div style="font-weight:900;">Happy Brownie (#225606)</div>
-                        <div style="color:var(--accent-gold); font-size:12px; margin-bottom:14px;">Цена апгрейда: 0.07 LIR POINT</div>
-
-                        <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">Шанс успеха: <span id="clover-chance-val" style="color:var(--accent-green);">50%</span></div>
-                        <input type="range" min="1" max="95" value="50" style="width:100%;" oninput="document.getElementById('clover-chance-val').innerText = this.value + '%'">
-
-                        <button class="btn-action" style="margin-top:16px; padding:12px; background:linear-gradient(90deg, var(--accent-gold), var(--accent-green)); color:#000;" onclick="playGameResult('Кловер-Удача', 0.07, 2)">СДЕЛАТЬ ROLL</button>
-                    </div>
-                `;
-            }
+    function openTopupModal() { document.getElementById('topup-modal').style.display = 'flex'; }
+    function closeTopupModal() { document.getElementById('topup-modal').style.display = 'none'; }
+    function openPage(p, b) {
+        document.querySelectorAll('.page-screen').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('screen-' + p).classList.add('active');
+        if (b) b.classList.add('active');
+    }
+    function loadNFTsFromAPI() {
+        document.getElementById('nft-container').innerHTML = `
+            <div class="nft-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/8146/8146767.png">
+                <div style="font-weight:bold; font-size:12px;">Happy Brownie</div>
+                <div style="font-size:10px; color:var(--accent-purple);">#225606</div>
+                <div style="font-size:12px; font-weight:bold; color:var(--accent-cyan); margin:4px 0;">💎 0.07 LIR</div>
+                <button class="btn-action" style="padding:6px; font-size:10px;" onclick="buyNFT('Happy Brownie', 0.07)">Купить</button>
+            </div>
+        `;
+    }
+    function loadMyNFTs() {
+        document.getElementById('my-nfts-container').innerHTML = `
+            <div class="nft-card">
+                <img src="https://cdn-icons-png.flaticon.com/512/8146/8146767.png">
+                <div style="font-weight:bold; font-size:12px;">Happy Brownie</div>
+                <div style="font-size:10px; color:var(--accent-gold);">#225606</div>
+            </div>
+        `;
+    }
+    function buyNFT(t, p) {
+        if (userBalance >= p) {
+            userBalance -= p;
+            updateBalanceUI();
+            tg.showAlert(`🎉 Вы купили ${t}!`);
+        } else {
+            tg.showAlert("❌ Недостаточно средств.");
         }
-
-        function closeFullscreenGame() {
-            document.getElementById('fullscreen-game-container').classList.remove('active');
-        }
-
-        function playGameResult(gameName, cost, multiplier) {
-            if (userBalance >= cost) {
-                userBalance -= cost;
-                const win = Math.random() > 0.4; // 60% шанс выигрыша
-                if (win) {
-                    const prize = cost * multiplier;
-                    userBalance += prize;
-                    tg.showAlert(`🎉 ПОБЕДА в ${gameName}!\nВы выиграли ${prize.toFixed(2)} LIR POINT!`);
-                } else {
-                    tg.showAlert(`😢 Увы, ставка не сыграла в ${gameName}. Попробуйте ещё раз!`);
-                }
-                updateBalanceUI();
-            } else {
-                tg.showAlert("❌ Недостаточно средств на балансе!");
-            }
-        }
-    </script>
-</body>
-</html>
+    }
+</script>
